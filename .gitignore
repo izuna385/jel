@@ -1,0 +1,6 @@
+./data/preprocessed/*
+./data/preprocessed/**
+./data/preprocessed_jawiki/*
+./data/preprocessed_jawiki/**
+./.idea/*
+./__pycache__/*
