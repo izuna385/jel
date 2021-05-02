@@ -2,7 +2,7 @@ import argparse
 import sys, json
 from distutils.util import strtobool
 
-class JelParams:
+class BiEncoderParams:
     def __init__(self):
         parser = argparse.ArgumentParser(description='Japanese Entity linker parameters')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
