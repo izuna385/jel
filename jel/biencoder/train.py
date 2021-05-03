@@ -16,6 +16,7 @@ def biencoder_training():
     vocab = build_vocab(train)
     vocab.extend_from_instances(dev)
 
+    # TODO: avoid memory consumption and lazy loading
     train, dev, test = list(reader.read('train')), list(reader.read('dev')), list(reader.read('test'))
     train_loader, dev_loader, test_loader = build_data_loaders(config, train, dev, test)
     train_loader.index_with(vocab)
