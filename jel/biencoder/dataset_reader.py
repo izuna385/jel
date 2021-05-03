@@ -6,7 +6,7 @@ from allennlp.data.fields import SpanField, ListField, TextField, MetadataField,
 from allennlp.data.fields import LabelField, TextField
 from allennlp.data.tokenizers import Token, Tokenizer, WhitespaceTokenizer
 
-from typing import List
+from typing import List, Tuple, Any, Dict
 
 import os
 import random
@@ -17,17 +17,32 @@ from jel.utils.common import jopen
 from jel.utils.tokenizer import JapaneseBertTokenizer
 import numpy as np
 
+from jel.common_config import (
+    MENTION_ANCHORS,
+    MENTION_START_BERT_TOKEN, MENTION_END_BERT_TOKEN,
+    CANONICAL_AND_DEF_BERT_CONNECT_TOKEN,
+    CLS_TOKEN, SEP_TOKEN,
+    MENTION_ANCHORS_REGEX,
+    MENTION_START_ANCHOR, MENTION_END_ANCHOR
+)
+
+
 class SmallJaWikiReader(DatasetReader):
     def __init__(
         self,
         config,
         resource_save_dir='./',
+        eval=False,
         **kwargs
     ):
         super().__init__(**kwargs)
         self.tokenizer = JapaneseBertTokenizer(resource_save_dir=resource_save_dir)
         self.token_indexers = self.tokenizer.token_indexer_returner()
         self.config = config
+        self.eval = eval
+
+        # kb_load
+        self.id2title, self.title2id, self.id2ent_doc = self._kb_loader()
 
     def _train_loader(self) -> dict:
         data = jopen(file_path=self.config.biencoder_dataset_file_path)
@@ -43,11 +58,27 @@ class SmallJaWikiReader(DatasetReader):
 
         return data['test']
 
-    def _title2doc_loader(self):
+    def _title2doc_loader(self) -> dict:
         return jopen(file_path=self.config.title2doc_file_path)
 
+    def _kb_loader(self) -> Tuple[Dict[int, Any], Dict[Any, int], Dict[int, Any]]:
+        title2ent_doc = self._title2doc_loader()
+
+        id2title, title2id, id2ent_doc = {}, {}, {}
+
+        for title, ent_doc in title2ent_doc.items():
+            assert len(id2title) == len(title2id)
+            assert len(id2title) == len(id2ent_doc)
+            idx = len(id2title)
+            if title not in title2id:
+                id2title.update({idx: title})
+                title2id.update({title: idx})
+                id2ent_doc.update({idx: ent_doc})
+
+        return id2title, title2id, id2ent_doc
+
     @overrides
-    def _read(self, train_dev_test_flag: str) -> List:
+    def _read(self, train_dev_test_flag: str) -> List[dict]:
         '''
         :param train_dev_test_flag: 'train', 'dev', 'test'
         :return: list of instances
@@ -66,10 +97,7 @@ class SmallJaWikiReader(DatasetReader):
         if self.config.debug:
             dataset = dataset[:self.config.debug_data_num]
 
-        ignored_mentions_num = 0
-
         all_parsed_data = list()
-
         for data in tqdm(enumerate(dataset)):
             # TODO: yield
             parsed_data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
@@ -79,8 +107,10 @@ class SmallJaWikiReader(DatasetReader):
             #     TODO: print parseError
             #     continue
 
+        return all_parsed_data
 
-    def _one_line_parser(self, data, train_dev_test_flag='train'):
+
+    def _one_line_parser(self, data, train_dev_test_flag='train') -> dict:
         mention_idx, mention_data = int(data[0]), data[1]
 
         document_title = mention_data['document_title']
@@ -91,65 +121,79 @@ class SmallJaWikiReader(DatasetReader):
         original_sentence_mention_start = mention_data['original_sentence_mention_start']
         original_sentence_mention_end = mention_data['original_sentence_mention_end']
 
-        if train_dev_test_flag in ['train'] or (train_dev_test_flag == 'dev' and self.dev_eval_flag == 0):
-            line = self.id2mention[mention_uniq_id]
-            gold_dui, _, gold_surface_mention, target_anchor_included_sentence = line.split('\t')
-            tokenized_context_including_target_anchors = self.custom_tokenizer_class.tokenize(
-                txt=target_anchor_included_sentence)
-            tokenized_context_including_target_anchors = [Token(split_token) for split_token in
-                                                          tokenized_context_including_target_anchors]
+        if train_dev_test_flag in ['train'] or (train_dev_test_flag == 'dev' and self.eval == False):
+            tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
+            tokenized_context_including_target_anchors = self._mention_split_tokens_converter(tokenized_context_including_target_anchors)
             data = {'context': tokenized_context_including_target_anchors}
 
-            data['mention_uniq_id'] = int(mention_uniq_id)
-            data['gold_duidx'] = int(self.dui2idx[gold_dui]) if gold_dui in self.dui2idx and gold_dui in self.dui2canonical else -1
-            if gold_dui in self.dui2canonical:
-                data['gold_dui_canonical_and_def_concatenated'] = self._canonical_and_def_context_concatenator(dui=gold_dui)
+            if annotation_doc_entity_title in self.title2id:
+                data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
+            else:
+                data['gold_ent_idx'] = -1
+
+            data['gold_title_and_def'] = self._title_and_ent_doc_concatenator(title=annotation_doc_entity_title)
         else:
             assert train_dev_test_flag in ['dev', 'test']
-            line = self.id2mention[mention_uniq_id]
-            gold_dui, _, surface_mention, target_anchor_included_sentence = line.split('\t')
-
-            candidate_duis_idx = [self.dui2idx[dui] for dui in self.candidate_generator.mention2candidate_duis[surface_mention]
-                              if dui in self.dui2idx and dui in self.dui2canonical][:self.config.max_candidates_num]
-            while len(candidate_duis_idx) < self.config.max_candidates_num:
-                random_choiced_dui = random.choice([dui for dui in self.dui2idx.keys()])
-                if self.dui2idx[random_choiced_dui] not in candidate_duis_idx:
-                    candidate_duis_idx.append(self.dui2idx[random_choiced_dui])
-            tokenized_context_including_target_anchors = self.custom_tokenizer_class.tokenize(
-                txt=target_anchor_included_sentence)
-            tokenized_context_including_target_anchors = [Token(split_token) for split_token in
-                                                          tokenized_context_including_target_anchors][:self.config.max_context_len]
-            data = {'context': tokenized_context_including_target_anchors}
-            data['candidate_duis_idx'] = candidate_duis_idx
-            data['gold_duidx'] = int(self.dui2idx[gold_dui]) if gold_dui in self.dui2idx else -1
-
-            gold_location_in_candidates = [0 for _ in range(self.config.max_candidates_num)]
-
-            if gold_dui in self.dui2idx:
-                for idx, cand_idx in enumerate(candidate_duis_idx):
-                    if cand_idx == self.dui2idx[gold_dui]:
-                        gold_location_in_candidates[idx] += 1
-
-                        if train_dev_test_flag == 'dev':
-                            self.dev_recall += 1
-                        if train_dev_test_flag == 'test':
-                            self.test_recall += 1
-
-            data['gold_location_in_candidates'] = gold_location_in_candidates
-            data['mention_uniq_id'] = int(mention_uniq_id)
 
         return data
 
-    def _canonical_and_def_context_concatenator(self, dui):
-        canonical =  self.custom_tokenizer_class.tokenize(txt=self.dui2canonical[dui])
-        definition =  self.custom_tokenizer_class.tokenize(txt=self.dui2definition[dui])
-        concatenated = ['[CLS]']
-        concatenated += canonical[:self.config.max_canonical_len]
-        concatenated.append(CANONICAL_AND_DEF_CONNECTTOKEN)
-        concatenated += definition[:self.config.max_def_len]
-        concatenated.append('[SEP]')
+    def _mention_split_tokens_converter(self, tokens: List[str]) -> List[Token]:
+        '''
 
-        return [Token(tokenized_word) for tokenized_word in concatenated]
+        :param tokens:
+        :return: Tokens after considering window size
+        '''
+        left, mention, right = list(), list(), list()
+        assert MENTION_START_ANCHOR in tokens
+        assert MENTION_END_ANCHOR in tokens
+
+        l_flag, m_flag = 0, 0
+        for str_tok in tokens:
+            if str_tok in MENTION_START_BERT_TOKEN:
+                l_flag += 1
+                continue
+            if str_tok in MENTION_END_BERT_TOKEN:
+                m_flag += 1
+                continue
+
+            if l_flag == 0 and m_flag == 0:
+                left.append(str_tok)
+
+            if l_flag == 1 and m_flag == 0:
+                mention.append(str_tok)
+
+            if l_flag == 1 and m_flag == 1:
+                right.append(str_tok)
+
+        left = left[-self.config.max_context_window_size:]
+        mention = mention[:self.config.max_mention_size]
+        right = right[:self.config.max_context_window_size]
+
+        window_condidered_tokens = list()
+        window_condidered_tokens.append(CLS_TOKEN)
+        window_condidered_tokens += left
+        window_condidered_tokens.append(MENTION_START_BERT_TOKEN)
+        window_condidered_tokens += mention
+        window_condidered_tokens.append(MENTION_END_BERT_TOKEN)
+        window_condidered_tokens += right
+        window_condidered_tokens.append(SEP_TOKEN)
+
+        return [Token(tok) for tok in window_condidered_tokens]
+
+    def _title_and_ent_doc_concatenator(self, title: str) -> List[Token]:
+        tokenized_title =  self.tokenizer.tokenize(txt=title)[:self.config.max_title_token_size]
+
+        ent_doc_sentences = ''.join(self.id2ent_doc[self.title2id[title]][:self.config.max_ent_considered_sent_num])
+        tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt=ent_doc_sentences)[:self.config.max_ent_desc_token_size]
+
+        concatenated_tokens = list()
+        concatenated_tokens.append(CLS_TOKEN)
+        concatenated_tokens += tokenized_title
+        concatenated_tokens.append(CANONICAL_AND_DEF_BERT_CONNECT_TOKEN)
+        concatenated_tokens += tokenized_ent_desc_tokens
+        concatenated_tokens.append(SEP_TOKEN)
+
+        return [Token(tok) for tok in concatenated_tokens]
 
     @overrides
     def text_to_instance(self, data=None) -> Instance:

@@ -4,13 +4,32 @@ import os
 import urllib.request
 from typing import List, Tuple
 import pdb
+import re
+
+from jel.common_config import (
+    MENTION_ANCHORS,
+    MENTION_START_BERT_TOKEN, MENTION_END_BERT_TOKEN,
+    CANONICAL_AND_DEF_BERT_CONNECT_TOKEN,
+    CLS_TOKEN, SEP_TOKEN,
+    MENTION_ANCHORS_REGEX,
+    MENTION_START_ANCHOR, MENTION_END_ANCHOR
+)
 
 class JapaneseBertTokenizer:
     def __init__(self, bert_model_name: str ='japanese_bert',
-                 resource_save_dir: str = './'
+                 resource_save_dir: str = './',
+                 mention_anchors: Tuple[str] = MENTION_ANCHORS
     ):
+        '''
+        :param bert_model_name:
+        :param resource_save_dir:
+        :param special_anchors:
+        '''
+
         self.bert_model_name = bert_model_name
         self.resource_save_dir = resource_save_dir
+        self.mention_anchors = mention_anchors
+        assert len(self.mention_anchors) == 2
 
         # load tokenizer
         self._bert_model_and_vocab_downloader()
@@ -35,11 +54,20 @@ class JapaneseBertTokenizer:
         if self.bert_model_name == 'japanese_bert':
             vocab_file = self.resource_save_dir + 'vocab_file/vocab.txt'
             return transformers.BertTokenizer(vocab_file=vocab_file,
-                                              do_basic_tokenize=True)
+                                              do_basic_tokenize=True,
+                                              never_split=list(set(MENTION_ANCHORS)))
         else:
             raise NotImplementedError('Currently {} are not supported.'.format(self.bert_model_name))
 
     def tokenize(self, txt: str, remove_special_vocab=False) -> List[str]:
+
+        # First, check whether text contains mention anchors.
+        mention_anchor_exist_flag = 0
+        for anchor in self.mention_anchors:
+            if anchor in txt:
+                mention_anchor_exist_flag += 1
+                break
+
         if remove_special_vocab:
             split_to_subwords = self.bert_tokenizer.tokenize(txt)
             new_tokens = list()
@@ -47,11 +75,23 @@ class JapaneseBertTokenizer:
             for token in split_to_subwords:
                 if token in ['[CLS]', '[SEP]']:
                     continue
+
                 new_tokens.append(token)
 
             return new_tokens
         else:
-            return self.bert_tokenizer.tokenize(txt)
+            if mention_anchor_exist_flag:
+                texts = re.split(MENTION_ANCHORS_REGEX, txt)
+                assert len(texts) == 3
+                tokens = list()
+                tokens += self.bert_tokenizer.tokenize(texts[0])
+                tokens.append(MENTION_START_ANCHOR)
+                tokens += self.bert_tokenizer.tokenize(texts[1])
+                tokens.append(MENTION_END_ANCHOR)
+                tokens += self.bert_tokenizer.tokenize(texts[2])
+                return tokens
+            else:
+                return self.bert_tokenizer.tokenize(txt)
 
     def _bert_model_and_vocab_downloader(self) -> None:
         resource_saved_dict = self.resource_save_dir + self.bert_model_name + '/'
