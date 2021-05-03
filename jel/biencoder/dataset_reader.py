@@ -7,7 +7,7 @@ from allennlp.data.dataset_readers import DatasetReader
 from allennlp.data.fields import SpanField, ListField, TextField, MetadataField, ArrayField, SequenceLabelField, LabelField
 from allennlp.data.fields import LabelField, TextField
 from allennlp.data.tokenizers import Token, Tokenizer, WhitespaceTokenizer
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Any, Dict, Iterable
 import random
 import pdb
 from tqdm import tqdm
@@ -76,7 +76,7 @@ class SmallJaWikiReader(DatasetReader):
         return id2title, title2id, id2ent_doc
 
     @overrides
-    def _read(self, train_dev_test_flag: str) -> List[dict]:
+    def _read(self, train_dev_test_flag: str) -> Iterable[Instance]:
         '''
         :param train_dev_test_flag: 'train', 'dev', 'test'
         :return: list of instances
@@ -97,11 +97,14 @@ class SmallJaWikiReader(DatasetReader):
 
         for data in tqdm(enumerate(dataset)):
             data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
-            yield self.text_to_instance(data)
+            try:
+                yield self.text_to_instance(data)
 
-            # except:
+            except:
+                raise Exception("ParseError")
             #     TODO: print parseError
             #     continue
+
 
     def _one_line_parser(self, data, train_dev_test_flag='train') -> dict:
         mention_idx, mention_data = int(data[0]), data[1]
@@ -114,19 +117,16 @@ class SmallJaWikiReader(DatasetReader):
         original_sentence_mention_start = mention_data['original_sentence_mention_start']
         original_sentence_mention_end = mention_data['original_sentence_mention_end']
 
-        if train_dev_test_flag in ['train'] or (train_dev_test_flag == 'dev' and self.eval == False):
-            tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
-            tokenized_context_including_target_anchors = self._mention_split_tokens_converter(tokenized_context_including_target_anchors)
-            data = {'context': tokenized_context_including_target_anchors}
+        tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
+        tokenized_context_including_target_anchors = self._mention_split_tokens_converter(tokenized_context_including_target_anchors)
+        data = {'context': tokenized_context_including_target_anchors}
 
-            if annotation_doc_entity_title in self.title2id:
-                data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
-            else:
-                data['gold_ent_idx'] = -1
-
-            data['gold_title_and_def'] = self._title_and_ent_doc_concatenator(title=annotation_doc_entity_title)
+        if annotation_doc_entity_title in self.title2id:
+            data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
         else:
-            assert train_dev_test_flag in ['dev', 'test']
+            data['gold_ent_idx'] = -1
+
+        data['gold_title_and_def'] = self._title_and_ent_doc_concatenator(title=annotation_doc_entity_title)
 
         return data
 
