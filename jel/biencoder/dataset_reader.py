@@ -97,18 +97,13 @@ class SmallJaWikiReader(DatasetReader):
         if self.config.debug:
             dataset = dataset[:self.config.debug_data_num]
 
-        all_parsed_data = list()
         for data in tqdm(enumerate(dataset)):
-            # TODO: yield
-            parsed_data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
-            all_parsed_data.append(parsed_data)
+            data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
+            yield self.text_to_instance(data)
 
             # except:
             #     TODO: print parseError
             #     continue
-
-        return all_parsed_data
-
 
     def _one_line_parser(self, data, train_dev_test_flag='train') -> dict:
         mention_idx, mention_data = int(data[0]), data[1]
@@ -200,22 +195,7 @@ class SmallJaWikiReader(DatasetReader):
         context_field = TextField(data['context'], self.token_indexers)
         fields = {"context": context_field}
 
-        fields['gold_duidx'] = ArrayField(np.array(data['gold_duidx']))
-        fields['mention_uniq_id'] = ArrayField(np.array(data['mention_uniq_id']))
-
-        if data['mention_uniq_id'] in self.test_mention_ids or \
-                (data['mention_uniq_id'] in self.dev_mention_ids and self.dev_eval_flag):
-            candidates_canonical_and_def_concatenated = [TextField(self._canonical_and_def_context_concatenator(
-                dui=self.idx2dui[idx]), self.token_indexers) for idx in data['candidate_duis_idx']]
-            fields['candidates_canonical_and_def_concatenated'] = ListField(candidates_canonical_and_def_concatenated)
-            fields['gold_location_in_candidates'] = ArrayField(np.array([data['gold_location_in_candidates']],
-                                                                        dtype='int16'))
-            fields['gold_dui_canonical_and_def_concatenated'] = MetadataField(0)
-        else: # train, or dev-eval under train
-            fields['candidates_canonical_and_def_concatenated'] = MetadataField(0)
-            fields['gold_location_in_candidates'] = MetadataField(0)
-            fields['gold_dui_canonical_and_def_concatenated'] = TextField(
-                data['gold_dui_canonical_and_def_concatenated'],
-                self.token_indexers)
+        fields['gold_ent_idx'] = ArrayField(np.array(data['gold_ent_idx']))
+        fields['gold_title_and_def'] = TextField(data['gold_title_and_def'], self.token_indexers)
 
         return Instance(fields)
