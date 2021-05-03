@@ -116,6 +116,6 @@ typing-extensions==3.7.4.3
 urllib3==1.26.3
 wasabi==0.8.2
 wcwidth==0.2.5
-wikiextractor==3.0.5
+wikiextractor==3.0.4
 wikipedia2vec==1.0.5
 zipp==3.4.0
