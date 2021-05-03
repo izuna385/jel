@@ -9,3 +9,4 @@
 ./**/**/__pycache__/*
 ./vocab_file/*
 ./japanese_bert/*
+./.pytest_cache/*
