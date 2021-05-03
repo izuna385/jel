@@ -12,10 +12,12 @@ def biencoder_training():
     reader = SmallJaWikiReader(config=config)
 
     # Loading Datasets
-    train, dev, test = reader._read('train'), reader._read('dev'), reader._read('test')
+    train, dev, test = reader.read('train'), reader.read('dev'), reader.read('test')
     vocab = build_vocab(train)
     vocab.extend_from_instances(dev)
 
+    # TODO: avoid memory consumption and lazy loading
+    train, dev, test = list(reader.read('train')), list(reader.read('dev')), list(reader.read('test'))
     train_loader, dev_loader, test_loader = build_data_loaders(config, train, dev, test)
     train_loader.index_with(vocab)
     dev_loader.index_with(vocab)
