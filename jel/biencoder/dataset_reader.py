@@ -1,18 +1,16 @@
-
+'''
+ja-wiki dataset reader for training bi-encoder
+'''
 from overrides import overrides
 from allennlp.data import Instance
 from allennlp.data.dataset_readers import DatasetReader
 from allennlp.data.fields import SpanField, ListField, TextField, MetadataField, ArrayField, SequenceLabelField, LabelField
 from allennlp.data.fields import LabelField, TextField
 from allennlp.data.tokenizers import Token, Tokenizer, WhitespaceTokenizer
-
 from typing import List, Tuple, Any, Dict
-
-import os
 import random
 import pdb
 from tqdm import tqdm
-import json
 from jel.utils.common import jopen
 from jel.utils.tokenizer import JapaneseBertTokenizer
 import numpy as np

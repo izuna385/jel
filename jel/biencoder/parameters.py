@@ -11,13 +11,17 @@ class BiEncoderExperiemntParams:
         parser.add_argument('-title2doc_file_path', action='store', default='./data/jawiki_small_dataset/title2doc.json', type=str)
 
         # for training
-        parser.add_argument('-batch_size_for_train', action='store', default=64, type=int)
         parser.add_argument('-max_context_window_size', action='store', default=30, type=int)
         parser.add_argument('-max_mention_size', action='store', default=15, type=int)
         parser.add_argument('-max_ent_considered_sent_num', action='store', default=10, type=int)
 
         parser.add_argument('-max_title_token_size', action='store', default=15, type=int)
         parser.add_argument('-max_ent_desc_token_size', action='store', default=100, type=int)
+
+        parser.add_argument('-lr', action='store', default=1e-5, type=float)
+        parser.add_argument('-num_epochs', action='store', default=2, type=int)
+        parser.add_argument('-batch_size_for_train', action='store', default=96, type=int)
+        parser.add_argument('-batch_size_for_eval', action='store', default=128, type=int)
 
         self.opts = parser.parse_args(sys.argv[1:])
         print('\n===PARAMETERS===')
