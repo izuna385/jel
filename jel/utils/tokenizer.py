@@ -60,7 +60,6 @@ class JapaneseBertTokenizer:
             raise NotImplementedError('Currently {} are not supported.'.format(self.bert_model_name))
 
     def tokenize(self, txt: str, remove_special_vocab=False) -> List[str]:
-
         # First, check whether text contains mention anchors.
         mention_anchor_exist_flag = 0
         for anchor in self.mention_anchors:
@@ -89,12 +88,15 @@ class JapaneseBertTokenizer:
                 tokens += self.bert_tokenizer.tokenize(texts[1])
                 tokens.append(MENTION_END_ANCHOR)
                 tokens += self.bert_tokenizer.tokenize(texts[2])
+
                 return tokens
             else:
+
                 return self.bert_tokenizer.tokenize(txt)
 
     def _bert_model_and_vocab_downloader(self) -> None:
         resource_saved_dict = self.resource_save_dir + self.bert_model_name + '/'
+
         if not os.path.exists(resource_saved_dict):
             os.mkdir(resource_saved_dict)
             print('=== Downloading japanese-bert ===')

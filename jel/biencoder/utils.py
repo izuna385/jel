@@ -1,6 +1,5 @@
-from typing import Dict, Iterable, List, Tuple
-from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
-
+from typing import Iterable, List, Tuple
+import torch
 from allennlp.data import (
     DataLoader,
     DatasetReader,
@@ -10,8 +9,6 @@ from allennlp.data import (
 )
 from allennlp.data.data_loaders import SimpleDataLoader
 from allennlp.models import Model
-from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
-
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
 
@@ -33,30 +30,24 @@ def build_data_loaders(config,
     return train_loader, dev_loader, test_loader
 
 def build_trainer(
-    config,
+    lr: float,
+    num_epochs: int,
     model: Model,
     train_loader: DataLoader,
-    dev_loader: DataLoader,
-) -> Trainer:
+    dev_loader: DataLoader) -> Trainer:
+
     parameters = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
-    optimizer = AdamOptimizer(parameters, lr=config.lr)  # type: ignore
-    model.cuda()
+    optimizer = AdamOptimizer(parameters, lr=lr)
+    if torch.cuda.is_available():
+        model.cuda()
+
     trainer = GradientDescentTrainer(
         model=model,
         data_loader=train_loader,
         validation_data_loader=dev_loader,
-        num_epochs=config.num_epochs,
+        num_epochs=num_epochs,
         optimizer=optimizer,
         cuda_device=0
     )
-    return trainer
 
-def emb_returner(config):
-    if config.bert_name == 'japanese-bert':
-        huggingface_model = 'cl-tohoku/bert-base-japanese'
-    else:
-        huggingface_model = 'dummy'
-        print(config.bert_name,'are not supported')
-        exit()
-    bert_embedder = PretrainedTransformerEmbedder(model_name=huggingface_model)
-    return bert_embedder, bert_embedder.get_output_dim(), BasicTextFieldEmbedder({'tokens': bert_embedder})
+    return trainer
