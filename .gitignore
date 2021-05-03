@@ -4,3 +4,9 @@
 ./data/preprocessed_jawiki/**
 ./.idea/*
 ./__pycache__/*
+./jel/__pycache__/*
+./**/__pycache__/*
+./**/**/__pycache__/*
+./vocab_file/*
+./japanese_bert/*
+./.pytest_cache/*
