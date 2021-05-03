@@ -2,10 +2,13 @@ import argparse
 import sys, json
 from distutils.util import strtobool
 
-class BiEncoderParams:
+class BiEncoderExperiemntParams:
     def __init__(self):
-        parser = argparse.ArgumentParser(description='Japanese Entity linker parameters')
+        parser = argparse.ArgumentParser(description='Japanese Entity linker parameters for experiment')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
+        parser.add_argument('-debug_data_num', action='store', default=100, type=int)
+        parser.add_argument('-biencoder_dataset_file_path', action='store', default='./data/jawiki_small_dataset/data.json', type=str)
+        parser.add_argument('-title2doc_file_path', action='store', default='./data/jawiki_small_dataset/title2doc.json', type=str)
 
         # for training
         parser.add_argument('-batch_size_for_train', action='store', default=64, type=int)
