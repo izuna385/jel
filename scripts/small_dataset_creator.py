@@ -109,13 +109,13 @@ if __name__ == "__main__":
     parser.add_argument(
         '--minimum_entity_collections',
         help="Minimu entity counts for creating small dataset.",
-        default=4000,
+        default=8000,
         type=int
     )
     parser.add_argument(
         '--minimum_annotation_count',
         help="Minimu entity counts for creating small dataset.",
-        default=10000,
+        default=150000,
         type=int
     )
 
