@@ -20,7 +20,7 @@ class BiEncoderExperiemntParams:
 
         parser.add_argument('-lr', action='store', default=1e-5, type=float)
         parser.add_argument('-num_epochs', action='store', default=2, type=int)
-        parser.add_argument('-batch_size_for_train', action='store', default=96, type=int)
+        parser.add_argument('-batch_size_for_train', action='store', default=64, type=int)
         parser.add_argument('-batch_size_for_eval', action='store', default=128, type=int)
 
         self.opts = parser.parse_args(sys.argv[1:])
