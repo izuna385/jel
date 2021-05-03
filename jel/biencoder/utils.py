@@ -11,7 +11,8 @@ from allennlp.data.data_loaders import SimpleDataLoader
 from allennlp.models import Model
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
-
+from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
+from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
     print("Building the vocabulary")
@@ -40,14 +41,17 @@ def build_trainer(
     optimizer = AdamOptimizer(parameters, lr=lr)
     if torch.cuda.is_available():
         model.cuda()
-
     trainer = GradientDescentTrainer(
         model=model,
         data_loader=train_loader,
         validation_data_loader=dev_loader,
         num_epochs=num_epochs,
         optimizer=optimizer,
-        cuda_device=0
+        cuda_device=0 if torch.cuda.is_available() else -1
     )
 
     return trainer
+
+def emb_returner():
+    return BasicTextFieldEmbedder(
+                     {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})

@@ -10,7 +10,7 @@ from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
 from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
 
 class Pooler_for_cano_and_def(Seq2VecEncoder):
-    def __init__(self, word_embedding_dropout: float, bert_model_name: str ='japanese_bert',
+    def __init__(self, word_embedding_dropout: float = 0.05, bert_model_name: str = 'japanese_bert',
                  word_embedder: BasicTextFieldEmbedder = BasicTextFieldEmbedder(
                      {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})):
         super(Pooler_for_cano_and_def, self).__init__()
@@ -21,7 +21,7 @@ class Pooler_for_cano_and_def(Seq2VecEncoder):
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
 
     def huggingface_nameloader(self):
-        if self.bert_name == 'japanese_bert':
+        if self.bert_model_name == 'japanese_bert':
             self.bert_weight_filepath = 'cl-tohoku/bert-base-japanese'
         else:
             raise NotImplementedError
@@ -36,7 +36,7 @@ class Pooler_for_cano_and_def(Seq2VecEncoder):
 
 
 class Pooler_for_mention(Seq2VecEncoder):
-    def __init__(self, word_embedding_dropout: float, bert_model_name: str ='japanese_bert',
+    def __init__(self, word_embedding_dropout: float = 0.05, bert_model_name: str = 'japanese_bert',
                  word_embedder: BasicTextFieldEmbedder = BasicTextFieldEmbedder(
                      {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})):
         super(Pooler_for_mention, self).__init__()
