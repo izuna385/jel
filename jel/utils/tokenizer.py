@@ -85,7 +85,11 @@ class JapaneseBertTokenizer:
         else:
             if mention_anchor_exist_flag:
                 texts = re.split(MENTION_ANCHORS_REGEX, txt)
-                assert len(texts) == 3
+                try:
+                    assert len(texts) == 3
+                except:
+                    print("bad tokenize: {}".format(txt))
+                    texts = texts[:3]
                 tokens = list()
                 tokens += self.bert_tokenizer.tokenize(texts[0])
                 tokens.append(MENTION_START_ANCHOR)

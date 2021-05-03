@@ -101,7 +101,9 @@ class SmallJaWikiReader(DatasetReader):
                 yield self.text_to_instance(data)
 
             except:
-                raise Exception("ParseError")
+                print("parseError", data["anchor_sent"])
+                continue
+
             #     TODO: print parseError
             #     continue
 
