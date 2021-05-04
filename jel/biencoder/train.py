@@ -7,10 +7,14 @@ from jel.biencoder.encoder import (
     )
 from jel.biencoder.model import Biencoder
 from jel.utils.embedder import bert_emb_returner, chive_emb_returner
-from allennlp.training.util import evaluate
-import copy
+from typing import Iterable, List, Tuple
+from allennlp.modules.seq2vec_encoders import Seq2VecEncoder
+from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
 
-def biencoder_training():
+def biencoder_training() -> Tuple[BasicTextFieldEmbedder, Seq2VecEncoder, Seq2VecEncoder]:
+    '''
+    :return: embedder, mention_encoder, entity_encoder
+    '''
     params = BiEncoderExperiemntParams()
     config = params.opts
     reader = SmallJaWikiReader(config=config)
@@ -47,4 +51,4 @@ def biencoder_training():
                             dev_loader=dev_loader)
     trainer.train()
 
-    return model
+    return embedder, mention_encoder, entity_encoder

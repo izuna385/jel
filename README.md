@@ -1,5 +1,5 @@
-# biel
-* Transformer-based entity linking library.
+# jel: Japanese Entity Linker
+* Lightweight linker (with sudachi) and transformer-based linker are suppported.
 
 ## Test
 `$ python pytest`
