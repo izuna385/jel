@@ -3,13 +3,18 @@ import argparse
 import os
 import sys
 import pdb
-from typing import Dict
+from typing import Dict, List
 import json
 import time
 import random
 random.seed(42)
 import copy
 import math
+from multiprocessing import Pool
+import multiprocessing as multi
+from tqdm import tqdm
+from jel.utils.tokenizer import SudachiTokenizer
+Sudachi_Tokenizer_Class = SudachiTokenizer()
 
 def jopen(json_filepath: str) -> Dict:
     with open(json_filepath, 'r') as f:
@@ -74,10 +79,15 @@ def main(dirpath_for_preprocessed_jawiki: str,
     # dump annotations
     if not os.path.exists(output_small_dataset_dirpath):
         os.mkdir(output_small_dataset_dirpath)
+
+    # TODO: add sudachi tokenized data to each annotations
     with open(output_small_dataset_dirpath + 'title2doc.json', 'w') as sdd:
         json.dump(small_entitiy_collections, sdd, ensure_ascii=False, indent=4, sort_keys=False, separators=(',', ': '))
 
+
     random.shuffle(annotations_whose_gold_exist_in_small_entity_collections)
+    # TODO: add sudachi tokenized data to each annotations
+
     train_frac, dev_frac, test_frac = 0.7, 0.15, 0.15
     train_data_num = math.floor(len(annotations_whose_gold_exist_in_small_entity_collections) * train_frac)
     dev_data_num = math.floor(len(annotations_whose_gold_exist_in_small_entity_collections) * dev_frac)
@@ -97,25 +107,25 @@ if __name__ == "__main__":
     parser.add_argument(
         '--dirpath_for_preprocessed_jawiki',
         help="Path to the dirpath_for_preprocessed_jawiki file.",
-        default='./data/preprocessed_jawiki/',
+        default='./data/preprocessed_jawiki_sudachi/',
         type=str
     )
     parser.add_argument(
         '--output_small_dataset_dirpath',
         help="Path to the output small dataset directory.",
-        default='./data/jawiki_small_dataset/',
+        default='./data/jawiki_small_dataset_sudachi/',
         type=str
     )
     parser.add_argument(
         '--minimum_entity_collections',
         help="Minimu entity counts for creating small dataset.",
-        default=8000,
+        default=50000,
         type=int
     )
     parser.add_argument(
         '--minimum_annotation_count',
         help="Minimu entity counts for creating small dataset.",
-        default=150000,
+        default=300000,
         type=int
     )
 
