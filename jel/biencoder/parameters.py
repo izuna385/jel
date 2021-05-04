@@ -20,8 +20,8 @@ class BiEncoderExperiemntParams:
 
         parser.add_argument('-lr', action='store', default=5e-3, type=float)
         parser.add_argument('-num_epochs', action='store', default=2, type=int)
-        parser.add_argument('-batch_size_for_train', action='store', default=512, type=int)
-        parser.add_argument('-batch_size_for_eval', action='store', default=512, type=int)
+        parser.add_argument('-batch_size_for_train', action='store', default=1024, type=int)
+        parser.add_argument('-batch_size_for_eval', action='store', default=2048, type=int)
 
         # bert and chive is currently available.
         parser.add_argument('-word_langs_for_training', action='store', default='chive', type=str)

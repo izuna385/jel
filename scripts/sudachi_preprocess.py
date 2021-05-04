@@ -88,6 +88,7 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
 
     for ent_name, documents in doc_title2sents.items():
         documents = documents[:MAX_CONSIDERED_SENTENCE_FOR_EACH_ENT]
+        title = tokenize(ent_name)
         new_sents = list()
         for sent in documents:
             try:
@@ -96,7 +97,7 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
             except:
                 continue
 
-        new_doc_title2sents.update({ent_name: new_sents})
+        new_doc_title2sents.update({ent_name: {'sudachi_tokenized_title': title, 'sudachi_tokenized_sents': new_sents}})
 
     new_json_path = json_path.replace('preprocessed_jawiki', 'preprocessed_jawiki_sudachi')
     with open(new_json_path, 'w') as njp:
