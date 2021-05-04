@@ -43,6 +43,24 @@ def main(json_paths_preprocessed: List[str]) -> None:
         imap = pool.imap(multiprocess_sudachi_tokenized_data_adder, json_paths_preprocessed)
         result = list(tqdm(imap, total=len(json_paths_preprocessed)))
 
+def retrieve_cache_or_tokenize(txt: str):
+    original_sentence_hash = hashlib.sha256(txt.encode("utf-8")).hexdigest()
+    cache_sentence_path = os.path.join(CACHED_DIR, original_sentence_hash)
+    cache_sentence_path = cache_sentence_path + '.json'
+    if os.path.exists(cache_sentence_path):
+        with open(cache_sentence_path, 'r') as cache:
+            c = json.load(cache)
+        cached_tokenized = c['cached_tokenized']
+
+        return cached_tokenized
+
+    else:
+        tokenized = tokenize(txt)
+        with open(cache_sentence_path, 'w') as cache_:
+            json.dump({'cached_tokenized': tokenized}, cache_)
+
+        return tokenized
+
 def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
     annotations, doc_title2sents = jopen(json_path)
 
@@ -57,10 +75,11 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
         original_sentence_mention_end = annotation['original_sentence_mention_end']
 
         try:
-            sudachi_anchor_sent = tokenize(anchor_sent)
             sudachi_mention = tokenize(mention)
+            sudachi_anchor_sent = tokenize(anchor_sent)
             annotation.update({'sudachi_anchor_sent': sudachi_anchor_sent})
             annotation.update({'sudachi_mention': sudachi_mention})
+
             new_annotations.append(annotation)
         except:
             pass
@@ -87,6 +106,9 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
     return 1
 
 if __name__ == '__main__':
+    if not os.path.exists(CACHED_DIR):
+        os.mkdir(CACHED_DIR)
+
     json_paths_preprocessed = all_json_filepath_getter_from_preprocessed_jawiki(dirpath=JAWIKI_PREPROCESSED_DATA_DIRPATH)
 
     # dirpath create for sudachi preprocessing
