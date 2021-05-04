@@ -10,3 +10,4 @@
 ./vocab_file/*
 ./japanese_bert/*
 ./.pytest_cache/*
+./resources/*
