@@ -18,6 +18,7 @@ def biencoder_training():
 
     # TODO: avoid memory consumption and lazy loading
     train, dev, test = list(reader.read('train')), list(reader.read('dev')), list(reader.read('test'))
+
     train_loader, dev_loader, test_loader = build_data_loaders(config, train, dev, test)
     train_loader.index_with(vocab)
     dev_loader.index_with(vocab)
