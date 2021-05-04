@@ -11,8 +11,6 @@ from allennlp.data.data_loaders import SimpleDataLoader
 from allennlp.models import Model
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
-from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
-from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
     print("Building the vocabulary")
@@ -51,7 +49,3 @@ def build_trainer(
     )
 
     return trainer
-
-def emb_returner():
-    return BasicTextFieldEmbedder(
-                     {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})
