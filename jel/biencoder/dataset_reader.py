@@ -7,7 +7,7 @@ from allennlp.data.dataset_readers import DatasetReader
 from allennlp.data.fields import SpanField, ListField, TextField, MetadataField, ArrayField, SequenceLabelField, LabelField
 from allennlp.data.fields import LabelField, TextField
 from allennlp.data.tokenizers import Token, Tokenizer, WhitespaceTokenizer
-from typing import List, Tuple, Any, Dict, Iterable
+from typing import List, Tuple, Any, Dict, Iterable, Iterator
 import random
 import pdb
 from tqdm import tqdm
@@ -24,7 +24,7 @@ from jel.common_config import (
     MENTION_START_ANCHOR, MENTION_END_ANCHOR
 )
 
-
+@DatasetReader.register("small_jawiki_reader")
 class SmallJaWikiReader(DatasetReader):
     def __init__(
         self,
@@ -76,7 +76,7 @@ class SmallJaWikiReader(DatasetReader):
         return id2title, title2id, id2ent_doc
 
     @overrides
-    def _read(self, train_dev_test_flag: str) -> Iterable[Instance]:
+    def _read(self, train_dev_test_flag: str) -> Iterator[Instance]:
         '''
         :param train_dev_test_flag: 'train', 'dev', 'test'
         :return: list of instances
@@ -101,9 +101,8 @@ class SmallJaWikiReader(DatasetReader):
                 yield self.text_to_instance(data)
 
             except:
-                raise Exception("ParseError")
-            #     TODO: print parseError
-            #     continue
+                print("parseError", data["anchor_sent"])
+                continue
 
 
     def _one_line_parser(self, data, train_dev_test_flag='train') -> dict:

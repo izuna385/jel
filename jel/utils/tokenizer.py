@@ -32,7 +32,7 @@ class JapaneseBertTokenizer:
         assert len(self.mention_anchors) == 2
 
         # load tokenizer
-        self._bert_model_and_vocab_downloader()
+        # self._bert_model_and_vocab_downloader()
         self.bert_tokenizer = self.bert_tokenizer_returner()
 
     def _huggingfacename_returner(self) -> Tuple:
@@ -53,13 +53,13 @@ class JapaneseBertTokenizer:
     def bert_tokenizer_returner(self):
         if self.bert_model_name == 'japanese_bert':
             vocab_file = self.resource_save_dir + 'vocab_file/vocab.txt'
-            return transformers.BertTokenizer(vocab_file=vocab_file,
-                                              do_basic_tokenize=True,
-                                              never_split=list(set(MENTION_ANCHORS)))
-            # return transformers.BertTokenizer.from_pretrained(
-            #     pretrained_model_name_or_path='cl-tohoku/bert-base-japanese',
-            #     never_split=list(set(MENTION_ANCHORS))
-            # )
+            # return transformers.BertTokenizer(vocab_file=vocab_file,
+            #                                   do_basic_tokenize=True,
+            #                                   never_split=list(set(MENTION_ANCHORS)))
+            return transformers.BertTokenizer.from_pretrained(
+                pretrained_model_name_or_path='cl-tohoku/bert-base-japanese',
+                never_split=list(set(MENTION_ANCHORS))
+            )
         else:
             raise NotImplementedError('Currently {} are not supported.'.format(self.bert_model_name))
 
@@ -85,7 +85,11 @@ class JapaneseBertTokenizer:
         else:
             if mention_anchor_exist_flag:
                 texts = re.split(MENTION_ANCHORS_REGEX, txt)
-                assert len(texts) == 3
+                try:
+                    assert len(texts) == 3
+                except:
+                    print("bad tokenize: {}".format(txt))
+                    texts = texts[:3]
                 tokens = list()
                 tokens += self.bert_tokenizer.tokenize(texts[0])
                 tokens.append(MENTION_START_ANCHOR)
