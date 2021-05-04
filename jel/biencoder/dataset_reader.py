@@ -12,7 +12,10 @@ import random
 import pdb
 from tqdm import tqdm
 from jel.utils.common import jopen
-from jel.utils.tokenizer import JapaneseBertTokenizer
+from jel.utils.tokenizer import (
+    JapaneseBertTokenizer,
+    SudachiTokenizer
+)
 import numpy as np
 
 from jel.common_config import (
@@ -34,13 +37,29 @@ class SmallJaWikiReader(DatasetReader):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.tokenizer = JapaneseBertTokenizer(resource_save_dir=resource_save_dir)
-        self.token_indexers = self.tokenizer.token_indexer_returner()
         self.config = config
+        if self.config.word_langs_for_training == 'bert':
+            self.tokenizer = JapaneseBertTokenizer(resource_save_dir=resource_save_dir)
+        elif self.config.word_langs_for_training == 'chive':
+            self.tokenizer = SudachiTokenizer()
+            self.token_indexers = self.tokenizer.token_indexer_returner()
+        else:
+            raise NotImplementedError
+
         self.eval = eval
 
         # kb_load
         self.id2title, self.title2id, self.id2ent_doc = self._kb_loader()
+
+    def _tokenizer_loader(self, resource_save_dir: str) -> None:
+        if self.config.word_langs_for_training == 'bert':
+            self.tokenizer = JapaneseBertTokenizer(resource_save_dir=resource_save_dir)
+            self.token_indexers = self.tokenizer.token_indexer_returner()
+        elif self.config.word_langs_for_training == 'chive':
+            self.tokenizer = SudachiTokenizer()
+            self.token_indexers = self.tokenizer.token_indexer_returner()
+        else:
+            raise NotImplementedError
 
     def _train_loader(self) -> dict:
         data = jopen(file_path=self.config.biencoder_dataset_file_path)
@@ -96,8 +115,8 @@ class SmallJaWikiReader(DatasetReader):
             dataset = dataset[:self.config.debug_data_num]
 
         for data in tqdm(enumerate(dataset)):
-            data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
             try:
+                data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
                 yield self.text_to_instance(data)
 
             except:
@@ -117,19 +136,47 @@ class SmallJaWikiReader(DatasetReader):
         original_sentence_mention_end = mention_data['original_sentence_mention_end']
 
         tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
-        tokenized_context_including_target_anchors = self._mention_split_tokens_converter(tokenized_context_including_target_anchors)
-        data = {'context': tokenized_context_including_target_anchors}
 
-        if annotation_doc_entity_title in self.title2id:
-            data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
+        if self.config.word_langs_for_training == 'bert':
+            tokenized_context_including_target_anchors = self._mention_split_tokens_converter(tokenized_context_including_target_anchors)
+            data = {'context': tokenized_context_including_target_anchors}
+
+            if annotation_doc_entity_title in self.title2id:
+                data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
+            else:
+                data['gold_ent_idx'] = -1
+
+            data['gold_title_and_def'] = self._title_and_ent_doc_concatenator(title=annotation_doc_entity_title)
+
+            return data
+
+        elif self.config.word_langs_for_training == 'chive':
+            mention_tokens, tokenized_context_including_target_anchors = self._mention_split_tokens_converter(
+                tokenized_context_including_target_anchors)
+
+            data = {'context': tokenized_context_including_target_anchors}
+
+            if annotation_doc_entity_title in self.title2id:
+                data['gold_ent_idx'] = self.title2id[annotation_doc_entity_title]
+            else:
+                data['gold_ent_idx'] = -1
+
+            data['mention'] = mention_tokens
+
+            tokenized_title = self.tokenizer.tokenize(txt=annotation_doc_entity_title)[:self.config.max_title_token_size]
+            ent_doc_sentences = ''.join(self.id2ent_doc[self.title2id[annotation_doc_entity_title]][:self.config.max_ent_considered_sent_num])
+            tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt=ent_doc_sentences)[
+                                        :self.config.max_ent_desc_token_size]
+
+            data['gold_title'] = [Token(t) for t in tokenized_title]
+            data['gold_ent_desc'] = [Token(t) for t in tokenized_ent_desc_tokens]
+
+            return data
+
         else:
-            data['gold_ent_idx'] = -1
+            raise NotImplementedError
 
-        data['gold_title_and_def'] = self._title_and_ent_doc_concatenator(title=annotation_doc_entity_title)
-
-        return data
-
-    def _mention_split_tokens_converter(self, tokens: List[str]) -> List[Token]:
+    def _mention_split_tokens_converter(self, tokens: List[str]) -> List[Token] or Tuple[List[Token]]:
         '''
 
         :param tokens:
@@ -141,10 +188,10 @@ class SmallJaWikiReader(DatasetReader):
 
         l_flag, m_flag = 0, 0
         for str_tok in tokens:
-            if str_tok in MENTION_START_BERT_TOKEN:
+            if str_tok in MENTION_START_ANCHOR:
                 l_flag += 1
                 continue
-            if str_tok in MENTION_END_BERT_TOKEN:
+            if str_tok in MENTION_END_ANCHOR:
                 m_flag += 1
                 continue
 
@@ -161,16 +208,28 @@ class SmallJaWikiReader(DatasetReader):
         mention = mention[:self.config.max_mention_size]
         right = right[:self.config.max_context_window_size]
 
-        window_condidered_tokens = list()
-        window_condidered_tokens.append(CLS_TOKEN)
-        window_condidered_tokens += left
-        window_condidered_tokens.append(MENTION_START_BERT_TOKEN)
-        window_condidered_tokens += mention
-        window_condidered_tokens.append(MENTION_END_BERT_TOKEN)
-        window_condidered_tokens += right
-        window_condidered_tokens.append(SEP_TOKEN)
+        if self.config.word_langs_for_training == 'bert':
+            window_condidered_tokens = list()
+            window_condidered_tokens.append(CLS_TOKEN)
+            window_condidered_tokens += left
+            window_condidered_tokens.append(MENTION_START_BERT_TOKEN)
+            window_condidered_tokens += mention
+            window_condidered_tokens.append(MENTION_END_BERT_TOKEN)
+            window_condidered_tokens += right
+            window_condidered_tokens.append(SEP_TOKEN)
 
-        return [Token(tok) for tok in window_condidered_tokens]
+            return [Token(tok) for tok in window_condidered_tokens]
+
+        elif self.config.word_langs_for_training == 'chive':
+            window_condidered_tokens = list()
+            window_condidered_tokens += left
+            window_condidered_tokens += mention
+            window_condidered_tokens += right
+
+            return [Token(tok) for tok in mention], [Token(tok) for tok in window_condidered_tokens]
+
+        else:
+            raise NotImplementedError
 
     def _title_and_ent_doc_concatenator(self, title: str) -> List[Token]:
         tokenized_title =  self.tokenizer.tokenize(txt=title)[:self.config.max_title_token_size]
@@ -193,6 +252,12 @@ class SmallJaWikiReader(DatasetReader):
         fields = {"context": context_field}
 
         fields['gold_ent_idx'] = ArrayField(np.array(data['gold_ent_idx']))
-        fields['gold_title_and_def'] = TextField(data['gold_title_and_def'], self.token_indexers)
+
+        if self.config.word_langs_for_training == 'bert':
+            fields['gold_title_and_def'] = TextField(data['gold_title_and_def'], self.token_indexers)
+        elif self.config.word_langs_for_training == 'chive':
+            fields['mention'] = TextField(data['mention'], self.token_indexers)
+            fields['gold_title'] = TextField(data['gold_title'], self.token_indexers)
+            fields['gold_ent_desc'] = TextField(data['gold_ent_desc'], self.token_indexers)
 
         return Instance(fields)
