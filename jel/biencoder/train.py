@@ -1,8 +1,12 @@
 from jel.biencoder.dataset_reader import SmallJaWikiReader
 from jel.biencoder.parameters import BiEncoderExperiemntParams
-from jel.biencoder.utils import build_vocab, build_data_loaders, emb_returner, build_trainer
-from jel.biencoder.encoder import Pooler_for_mention, Pooler_for_cano_and_def
+from jel.biencoder.utils import build_vocab, build_data_loaders, build_trainer
+from jel.biencoder.encoder import (
+    BertPoolerForMention, BertPoolerForTitleAndDef,
+    ChiveMentionEncoder, ChiveEntityEncoder
+    )
 from jel.biencoder.model import Biencoder
+from jel.utils.embedder import bert_emb_returner, chive_emb_returner
 from allennlp.training.util import evaluate
 import copy
 
@@ -23,11 +27,18 @@ def biencoder_training():
     train_loader.index_with(vocab)
     dev_loader.index_with(vocab)
 
-    embedder = emb_returner()
-    mention_encoder, entity_encoder = Pooler_for_mention(word_embedder=embedder), \
-                                      Pooler_for_cano_and_def(word_embedder=embedder)
+    if config.word_langs_for_training == 'bert':
+        embedder = bert_emb_returner()
+        mention_encoder, entity_encoder = BertPoolerForMention(word_embedder=embedder), \
+                                          BertPoolerForTitleAndDef(word_embedder=embedder)
+    elif config.word_langs_for_training == 'chive':
+        embedder = chive_emb_returner(vocab=vocab)
+        mention_encoder, entity_encoder = ChiveMentionEncoder(word_embedder=embedder), \
+                                          ChiveEntityEncoder(word_embedder=embedder)
+    else:
+        raise NotImplementedError
 
-    model = Biencoder(mention_encoder, entity_encoder, vocab)
+    model = Biencoder(config, mention_encoder, entity_encoder, vocab)
 
     trainer = build_trainer(lr=config.lr,
                             num_epochs=config.num_epochs,
