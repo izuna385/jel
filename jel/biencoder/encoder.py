@@ -3,17 +3,19 @@ Seq2VecEncoders for encoding mentions and entities.
 '''
 import torch.nn as nn
 from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, PytorchSeq2VecWrapper, BagOfEmbeddingsEncoder
-from allennlp.modules.seq2vec_encoders import BertPooler
+from allennlp.modules.seq2vec_encoders import BertPooler, CnnEncoder
 from overrides import overrides
 from allennlp.nn.util import get_text_field_mask
 from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
 from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
+import torch.nn as nn
+import torch
 
-class Pooler_for_cano_and_def(Seq2VecEncoder):
+class BertPoolerForTitleAndDef(Seq2VecEncoder):
     def __init__(self, word_embedding_dropout: float = 0.05, bert_model_name: str = 'japanese_bert',
                  word_embedder: BasicTextFieldEmbedder = BasicTextFieldEmbedder(
                      {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})):
-        super(Pooler_for_cano_and_def, self).__init__()
+        super(BertPoolerForTitleAndDef, self).__init__()
         self.bert_model_name = bert_model_name
         self.huggingface_nameloader()
         self.bertpooler_sec2vec = BertPooler(pretrained_model=self.bert_weight_filepath)
@@ -35,11 +37,11 @@ class Pooler_for_cano_and_def(Seq2VecEncoder):
         return entity_emb
 
 
-class Pooler_for_mention(Seq2VecEncoder):
+class BertPoolerForMention(Seq2VecEncoder):
     def __init__(self, word_embedding_dropout: float = 0.05, bert_model_name: str = 'japanese_bert',
                  word_embedder: BasicTextFieldEmbedder = BasicTextFieldEmbedder(
                      {'tokens': PretrainedTransformerEmbedder(model_name='cl-tohoku/bert-base-japanese')})):
-        super(Pooler_for_mention, self).__init__()
+        super(BertPoolerForMention, self).__init__()
         self.bert_model_name = bert_model_name
         self.huggingface_nameloader()
         self.bertpooler_sec2vec = BertPooler(pretrained_model=self.bert_weight_filepath)
@@ -64,3 +66,56 @@ class Pooler_for_mention(Seq2VecEncoder):
     def get_output_dim(self):
         # Currently bert-large is not supported.
         return 768
+
+class ChiveMentionEncoder(Seq2VecEncoder):
+    def __init__(self,
+                 word_embedder: BasicTextFieldEmbedder,
+                 word_embedding_dropout: float = 0.05,):
+        super(ChiveMentionEncoder, self).__init__()
+        self.sec2vec_for_mention = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.sec2vec_for_context = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.linear = nn.Linear(600, 300)
+        self.word_embedder = word_embedder
+        self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
+
+    def forward(self, mention, context):
+        mask_ment = get_text_field_mask(mention)
+        mention_emb = self.word_embedder(mention)
+        mention_emb = self.word_embedding_dropout(mention_emb)
+        mention_emb = self.sec2vec_for_mention(mention_emb, mask_ment)
+
+        mask_context = get_text_field_mask(context)
+        context_emb = self.word_embedder(context)
+        context_emb = self.word_embedding_dropout(context_emb)
+        context_emb = self.sec2vec_for_context(context_emb, mask_context)
+
+        final_emb = self.linear(torch.cat((mention_emb, context_emb), 1))
+
+        return final_emb
+
+
+class ChiveEntityEncoder(Seq2VecEncoder):
+    def __init__(self,
+                 word_embedder: BasicTextFieldEmbedder,
+                 word_embedding_dropout: float = 0.05):
+        super(ChiveEntityEncoder, self).__init__()
+        self.sec2vec_for_title = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.sec2vec_for_ent_desc = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.linear = nn.Linear(600, 300)
+        self.word_embedder = word_embedder
+        self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
+
+    def forward(self, title, ent_desc):
+        mask_title = get_text_field_mask(title)
+        title_emb = self.word_embedder(title)
+        title_emb = self.word_embedding_dropout(title_emb)
+        title_emb = self.sec2vec_for_title(title_emb, mask_title)
+
+        mask_ent_desc = get_text_field_mask(ent_desc)
+        ent_desc_emb = self.word_embedder(ent_desc)
+        ent_desc_emb = self.word_embedding_dropout(ent_desc_emb)
+        ent_desc_emb = self.sec2vec_for_ent_desc(ent_desc_emb, mask_ent_desc)
+
+        final_emb = self.linear(torch.cat((title_emb, ent_desc_emb), 1))
+
+        return final_emb
