@@ -72,9 +72,10 @@ class ChiveMentionEncoder(Seq2VecEncoder):
                  word_embedder: BasicTextFieldEmbedder,
                  word_embedding_dropout: float = 0.05,):
         super(ChiveMentionEncoder, self).__init__()
-        self.sec2vec_for_mention = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.sec2vec_for_context = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.sec2vec_for_mention = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+        self.sec2vec_for_context = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
         self.linear = nn.Linear(600, 300)
+        self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
 
@@ -90,6 +91,7 @@ class ChiveMentionEncoder(Seq2VecEncoder):
         context_emb = self.sec2vec_for_context(context_emb, mask_context)
 
         final_emb = self.linear(torch.cat((mention_emb, context_emb), 1))
+        final_emb = self.linear2(final_emb)
 
         return final_emb
 
@@ -99,9 +101,10 @@ class ChiveEntityEncoder(Seq2VecEncoder):
                  word_embedder: BasicTextFieldEmbedder,
                  word_embedding_dropout: float = 0.05):
         super(ChiveEntityEncoder, self).__init__()
-        self.sec2vec_for_title = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.sec2vec_for_ent_desc = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
+        self.sec2vec_for_title = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+        self.sec2vec_for_ent_desc = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
         self.linear = nn.Linear(600, 300)
+        self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
 
@@ -117,5 +120,6 @@ class ChiveEntityEncoder(Seq2VecEncoder):
         ent_desc_emb = self.sec2vec_for_ent_desc(ent_desc_emb, mask_ent_desc)
 
         final_emb = self.linear(torch.cat((title_emb, ent_desc_emb), 1))
+        final_emb = self.linear2(final_emb)
 
         return final_emb

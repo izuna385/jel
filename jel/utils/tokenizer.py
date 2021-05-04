@@ -5,6 +5,9 @@ import urllib.request
 from typing import List, Tuple
 import pdb
 import re
+from allennlp.data.token_indexers import SingleIdTokenIndexer
+from sudachipy import tokenizer as sudachiTokenizer
+from sudachipy import dictionary as sudachiDic
 
 from jel.common_config import (
     MENTION_ANCHORS,
@@ -14,6 +17,49 @@ from jel.common_config import (
     MENTION_ANCHORS_REGEX,
     MENTION_START_ANCHOR, MENTION_END_ANCHOR
 )
+
+
+class SudachiTokenizer:
+    def __init__(self,
+                 mention_anchors: Tuple[str] = MENTION_ANCHORS
+    ):
+        '''
+        :param resource_save_dir:
+        :param mention_anchors:
+        '''
+        self.tokenizer = sudachiDic.Dictionary().create()
+        self.mode = sudachiTokenizer.Tokenizer.SplitMode.B
+        self.mention_anchors = mention_anchors
+
+    def tokenize(self, txt: str) -> List[str]:
+        # First, check whether text contains mention anchors.
+        mention_anchor_exist_flag = 0
+        for anchor in self.mention_anchors:
+            if anchor in txt:
+                mention_anchor_exist_flag += 1
+                break
+
+        if mention_anchor_exist_flag:
+            texts = re.split(MENTION_ANCHORS_REGEX, txt)
+            try:
+                assert len(texts) == 3
+            except:
+                print("bad tokenize: {}".format(txt))
+                texts = texts[:3]
+            tokens = list()
+            tokens += [m.surface() for m in self.tokenizer.tokenize(texts[0], self.mode)]
+            tokens.append(MENTION_START_ANCHOR)
+            tokens += [m.surface() for m in self.tokenizer.tokenize(texts[1], self.mode)]
+            tokens.append(MENTION_END_ANCHOR)
+            tokens += [m.surface() for m in self.tokenizer.tokenize(texts[2], self.mode)]
+
+            return tokens
+        else:
+            return [m.surface() for m in self.tokenizer.tokenize(txt, self.mode)]
+
+    def token_indexer_returner(self):
+        return {"tokens": SingleIdTokenIndexer()}
+
 
 class JapaneseBertTokenizer:
     def __init__(self, bert_model_name: str ='japanese_bert',
