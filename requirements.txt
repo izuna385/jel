@@ -19,7 +19,6 @@ Cython==0.29.23
 dartsclone==0.9.0
 docutils==0.15.2
 emoji==1.2.0
-faiss==1.5.3
 filelock==3.0.12
 ftfy==5.9
 fugashi==1.1.0
@@ -29,7 +28,6 @@ idna==2.10
 importlib-metadata==3.7.0
 iniconfig==1.1.1
 ipadic==1.0.0
-ja-core-news-md @ https://github.com/explosion/spacy-models/releases/download/ja_core_news_md-3.0.0/ja_core_news_md-3.0.0-py3-none-any.whl
 ja-ginza==4.0.0
 jieba==0.42.1
 Jinja2==2.11.3
@@ -37,8 +35,6 @@ jmespath==0.10.0
 joblib==1.0.1
 jsonnet==0.17.0
 jsonpickle==2.0.0
-kaggle==1.5.12
-konoha==4.6.4
 lmdb==1.1.1
 marisa-trie==0.7.5
 MarkupSafe==1.1.1
@@ -86,7 +82,6 @@ s3transfer==0.3.4
 sacremoses==0.0.43
 scikit-learn==0.24.1
 scipy==1.6.1
-scispacy==0.4.0
 sentencepiece==0.1.95
 smart-open==3.0.0
 sortedcontainers==2.1.0
@@ -96,7 +91,6 @@ spacy-alignments==0.7.2
 spacy-legacy==3.0.1
 spacy-transformers==1.0.1
 srsly==2.4.1
-stanza==1.2
 SudachiDict-core==20201223.post1
 SudachiPy==0.5.2
 tensorboardX==2.1
@@ -116,6 +110,4 @@ typing-extensions==3.7.4.3
 urllib3==1.26.3
 wasabi==0.8.2
 wcwidth==0.2.5
-wikiextractor==3.0.4
-wikipedia2vec==1.0.5
 zipp==3.4.0

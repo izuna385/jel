@@ -74,8 +74,9 @@ class ChiveMentionEncoder(Seq2VecEncoder):
                  word_embedding_dropout: float = 0.05,):
         super(ChiveMentionEncoder, self).__init__()
         self.sec2vec_for_mention = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
-        self.sec2vec_for_context = LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
-        self.linear = nn.Linear(900, 300)
+        self.sec2vec_for_context = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+            # LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
+        self.linear = nn.Linear(600, 300)
         self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
@@ -103,8 +104,9 @@ class ChiveEntityEncoder(Seq2VecEncoder):
                  word_embedding_dropout: float = 0.05):
         super(ChiveEntityEncoder, self).__init__()
         self.sec2vec_for_title = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
-        self.sec2vec_for_ent_desc = LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
-        self.linear = nn.Linear(900, 300)
+        self.sec2vec_for_ent_desc = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+            # LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
+        self.linear = nn.Linear(600, 300)
         self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
