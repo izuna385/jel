@@ -3,4 +3,4 @@ from allennlp.models import Model
 
 def train_test():
     model = biencoder_training()
-    # assert type(model) == Model
+    assert type(model) == Model

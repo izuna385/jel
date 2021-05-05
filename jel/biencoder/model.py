@@ -13,12 +13,14 @@ import pdb
 
 class Biencoder(Model):
     def __init__(self,
+                 config,
                  mention_encoder: Seq2VecEncoder,
                  entity_encoder: Seq2VecEncoder,
                  vocab,
                  scoring_function_for_model: str='cossim'):
 
         super().__init__(vocab)
+        self.config = config
         self.scoring_function_for_model = scoring_function_for_model
         self.mention_encoder = mention_encoder
         self.accuracy = CategoricalAccuracy()
@@ -29,13 +31,25 @@ class Biencoder(Model):
     def forward(self,
                 context: torch.Tensor = None,
                 gold_ent_idx: torch.Tensor = None,
-                gold_title_and_def: torch.Tensor = None
+                gold_title_and_def: torch.Tensor = None,
+                mention: torch.Tensor = None,
+                gold_title: torch.Tensor = None,
+                gold_ent_desc: torch.Tensor = None
                 ):
-
-        batch_num = context['tokens']['token_ids'].size(0)
-        device = torch.get_device(context['tokens']['token_ids']) if torch.cuda.is_available() else torch.device('cpu')
-        contextualized_mention = self.mention_encoder(context)
-        encoded_entites = self.entity_encoder(cano_and_def_concatnated_text=gold_title_and_def)
+        if self.config.word_langs_for_training == 'bert':
+            batch_num = context['tokens']['token_ids'].size(0)
+            device = torch.get_device(context['tokens']['token_ids']) if torch.cuda.is_available() else torch.device(
+                'cpu')
+            contextualized_mention = self.mention_encoder(context)
+            encoded_entites = self.entity_encoder(cano_and_def_concatnated_text=gold_title_and_def)
+        elif self.config.word_langs_for_training == 'chive':
+            batch_num = context['tokens']['tokens'].size(0)
+            device = torch.get_device(context['tokens']['tokens']) if torch.cuda.is_available() else torch.device(
+                'cpu')
+            contextualized_mention = self.mention_encoder(mention, context)
+            encoded_entites = self.entity_encoder(gold_title, gold_ent_desc)
+        else:
+            raise NotImplementedError
 
         if self.scoring_function_for_model == 'cossim':
             contextualized_mention = normalize(contextualized_mention, dim=1)

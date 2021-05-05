@@ -107,9 +107,6 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
     return 1
 
 if __name__ == '__main__':
-    if not os.path.exists(CACHED_DIR):
-        os.mkdir(CACHED_DIR)
-
     json_paths_preprocessed = all_json_filepath_getter_from_preprocessed_jawiki(dirpath=JAWIKI_PREPROCESSED_DATA_DIRPATH)
 
     # dirpath create for sudachi preprocessing

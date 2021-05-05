@@ -2,7 +2,7 @@
 Seq2VecEncoders for encoding mentions and entities.
 '''
 import torch.nn as nn
-from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, PytorchSeq2VecWrapper, BagOfEmbeddingsEncoder
+from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, LstmSeq2VecEncoder, BagOfEmbeddingsEncoder
 from allennlp.modules.seq2vec_encoders import BertPooler, CnnEncoder
 from overrides import overrides
 from allennlp.nn.util import get_text_field_mask
@@ -10,6 +10,7 @@ from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
 from allennlp.modules.token_embedders import PretrainedTransformerEmbedder
 import torch.nn as nn
 import torch
+import pdb
 
 class BertPoolerForTitleAndDef(Seq2VecEncoder):
     def __init__(self, word_embedding_dropout: float = 0.05, bert_model_name: str = 'japanese_bert',
@@ -72,9 +73,10 @@ class ChiveMentionEncoder(Seq2VecEncoder):
                  word_embedder: BasicTextFieldEmbedder,
                  word_embedding_dropout: float = 0.05,):
         super(ChiveMentionEncoder, self).__init__()
-        self.sec2vec_for_mention = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.sec2vec_for_context = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.linear = nn.Linear(600, 300)
+        self.sec2vec_for_mention = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+        self.sec2vec_for_context = LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
+        self.linear = nn.Linear(900, 300)
+        self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
 
@@ -90,6 +92,7 @@ class ChiveMentionEncoder(Seq2VecEncoder):
         context_emb = self.sec2vec_for_context(context_emb, mask_context)
 
         final_emb = self.linear(torch.cat((mention_emb, context_emb), 1))
+        final_emb = self.linear2(final_emb)
 
         return final_emb
 
@@ -99,9 +102,10 @@ class ChiveEntityEncoder(Seq2VecEncoder):
                  word_embedder: BasicTextFieldEmbedder,
                  word_embedding_dropout: float = 0.05):
         super(ChiveEntityEncoder, self).__init__()
-        self.sec2vec_for_title = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.sec2vec_for_ent_desc = CnnEncoder(embedding_dim=300, num_filters=100, output_dim=300)
-        self.linear = nn.Linear(600, 300)
+        self.sec2vec_for_title = BagOfEmbeddingsEncoder(embedding_dim=300, averaged=True)
+        self.sec2vec_for_ent_desc = LstmSeq2VecEncoder(input_size=300, hidden_size=300, num_layers=1, bidirectional=True)
+        self.linear = nn.Linear(900, 300)
+        self.linear2 = nn.Linear(300, 300)
         self.word_embedder = word_embedder
         self.word_embedding_dropout = nn.Dropout(word_embedding_dropout)
 
@@ -117,5 +121,6 @@ class ChiveEntityEncoder(Seq2VecEncoder):
         ent_desc_emb = self.sec2vec_for_ent_desc(ent_desc_emb, mask_ent_desc)
 
         final_emb = self.linear(torch.cat((title_emb, ent_desc_emb), 1))
+        final_emb = self.linear2(final_emb)
 
         return final_emb

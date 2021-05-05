@@ -6,7 +6,7 @@ class BiEncoderExperiemntParams:
     def __init__(self):
         parser = argparse.ArgumentParser(description='Japanese Entity linker parameters for experiment')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
-        parser.add_argument('-debug_data_num', action='store', default=20000, type=int)
+        parser.add_argument('-debug_data_num', action='store', default=1000, type=int)
         parser.add_argument('-biencoder_dataset_file_path', action='store', default='./data/jawiki_small_dataset_sudachi/data.json', type=str)
         parser.add_argument('-title2doc_file_path', action='store', default='./data/jawiki_small_dataset_sudachi/title2doc.json', type=str)
 
@@ -21,11 +21,10 @@ class BiEncoderExperiemntParams:
         parser.add_argument('-lr', action='store', default=5e-3, type=float)
         parser.add_argument('-num_epochs', action='store', default=2, type=int)
         parser.add_argument('-batch_size_for_train', action='store', default=1024, type=int)
-        parser.add_argument('-batch_size_for_eval', action='store', default=2048, type=int)
+        parser.add_argument('-batch_size_for_eval', action='store', default=4096, type=int)
 
         # bert and chive is currently available.
         parser.add_argument('-word_langs_for_training', action='store', default='chive', type=str)
-
 
         self.opts = parser.parse_args(sys.argv[1:])
         print('\n===PARAMETERS===')
