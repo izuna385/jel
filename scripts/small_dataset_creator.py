@@ -80,13 +80,7 @@ def main(dirpath_for_preprocessed_jawiki: str,
     if not os.path.exists(output_small_dataset_dirpath):
         os.mkdir(output_small_dataset_dirpath)
 
-    # TODO: add sudachi tokenized data to each annotations
-    with open(output_small_dataset_dirpath + 'title2doc.json', 'w') as sdd:
-        json.dump(small_entitiy_collections, sdd, ensure_ascii=False, indent=4, sort_keys=False, separators=(',', ': '))
-
-
     random.shuffle(annotations_whose_gold_exist_in_small_entity_collections)
-    # TODO: add sudachi tokenized data to each annotations
 
     train_frac, dev_frac, test_frac = 0.7, 0.15, 0.15
     train_data_num = math.floor(len(annotations_whose_gold_exist_in_small_entity_collections) * train_frac)
@@ -95,6 +89,9 @@ def main(dirpath_for_preprocessed_jawiki: str,
     train, dev, test = annotations_whose_gold_exist_in_small_entity_collections[:train_data_num], \
                        annotations_whose_gold_exist_in_small_entity_collections[train_data_num: train_data_num + dev_data_num], \
                        annotations_whose_gold_exist_in_small_entity_collections[train_data_num + dev_data_num:]
+
+    with open(output_small_dataset_dirpath + 'title2doc.json', 'w') as sdd:
+        json.dump(small_entitiy_collections, sdd, ensure_ascii=False, indent=4, sort_keys=False, separators=(',', ': '))
 
     with open(output_small_dataset_dirpath + 'data.json', 'w') as smd:
         json.dump({'train': train,
@@ -118,14 +115,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--minimum_entity_collections',
-        help="Minimu entity counts for creating small dataset.",
-        default=50000,
+        help="Minimum entity counts for creating small dataset.",
+        default=10000,
         type=int
     )
     parser.add_argument(
         '--minimum_annotation_count',
-        help="Minimu entity counts for creating small dataset.",
-        default=300000,
+        help="Minimum entity counts for creating small dataset.",
+        default=50000,
         type=int
     )
 
