@@ -1,4 +1,4 @@
-<p align="center"><img width="50%" src="docs/jel-logo.png"></p>
+<p align="center"><img width="20%" src="docs/jel-logo.png"></p>
 
 # jel: Japanese Entity Linker
 * Lightweight linker (with sudachi) and transformer-based linker are suppported.
@@ -18,3 +18,7 @@ $ python3 ./scripts/sudachi_preprocess.py
 $ python3 ./scripts/small_dataset_creator.py
 $ python3 ./scripts/biencoder_training_check.py
 ```
+
+## Notes
+* faiss==1.5.3 from pip causes error _swigfaiss. 
+  
