@@ -1,3 +1,5 @@
+<p align="center"><img width="50%" src="docs/jel-logo.png"></p>
+
 # jel: Japanese Entity Linker
 * Lightweight linker (with sudachi) and transformer-based linker are suppported.
 
