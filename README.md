@@ -23,6 +23,7 @@ $ python3 ./scripts/biencoder_training_check.py
 * faiss==1.5.3 from pip causes error _swigfaiss. 
 
 ## LICENSE
+Apache 2.0 License.
 
 ## CITATION
 ```
