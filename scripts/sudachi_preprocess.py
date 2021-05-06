@@ -1,26 +1,18 @@
 from glob import glob
-import argparse
 import os
-import sys
-import pdb
 from typing import Dict, List, Tuple
 import json
-import time
 import random
 random.seed(42)
-import copy
-import math
 from multiprocessing import Pool
 import multiprocessing as multi
 from tqdm import tqdm
-import hashlib
 from jel.utils.tokenizer import SudachiTokenizer
 Sudachi_Tokenizer_Class = SudachiTokenizer()
 
 JAWIKI_PREPROCESSED_DATA_DIRPATH = './data/preprocessed_jawiki/'
 JAWIKI_PREPROCESSED_DATA_SUDACHI_TOKENIZED_ADDED_DIRPATH = './data/preprocessed_jawiki_sudachi/'
 MAX_CONSIDERED_SENTENCE_FOR_EACH_ENT = 10
-CACHED_DIR = './sudachi_cache/'
 
 def all_json_filepath_getter_from_preprocessed_jawiki(dirpath: str) -> List[str]:
     return glob(dirpath+'**/*')
@@ -37,31 +29,12 @@ def jopen(json_path: str) -> Tuple[Dict, Dict]:
 def tokenize(txt: str) -> List[str]:
     return Sudachi_Tokenizer_Class.tokenize(txt=txt)
 
-def main(json_paths_preprocessed: List[str]) -> None:
-    n_cores = multi.cpu_count()
-    with Pool(n_cores) as pool:
-        imap = pool.imap(multiprocess_sudachi_tokenized_data_adder, json_paths_preprocessed)
-        result = list(tqdm(imap, total=len(json_paths_preprocessed)))
-
-def retrieve_cache_or_tokenize(txt: str):
-    original_sentence_hash = hashlib.sha256(txt.encode("utf-8")).hexdigest()
-    cache_sentence_path = os.path.join(CACHED_DIR, original_sentence_hash)
-    cache_sentence_path = cache_sentence_path + '.json'
-    if os.path.exists(cache_sentence_path):
-        with open(cache_sentence_path, 'r') as cache:
-            c = json.load(cache)
-        cached_tokenized = c['cached_tokenized']
-
-        return cached_tokenized
-
-    else:
-        tokenized = tokenize(txt)
-        with open(cache_sentence_path, 'w') as cache_:
-            json.dump({'cached_tokenized': tokenized}, cache_)
-
-        return tokenized
 
 def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
+    '''
+    :param json_path: one json path from preprocessed ja-wiki.
+    :return:
+    '''
     annotations, doc_title2sents = jopen(json_path)
 
     new_annotations = list()
@@ -106,14 +79,27 @@ def multiprocess_sudachi_tokenized_data_adder(json_path: str) -> int:
 
     return 1
 
-if __name__ == '__main__':
+def multi_preprocess(json_paths_preprocessed: List[str]) -> None:
+    n_cores = multi.cpu_count()
+    with Pool(n_cores) as pool:
+        imap = pool.imap(multiprocess_sudachi_tokenized_data_adder, json_paths_preprocessed)
+        _ = list(tqdm(imap, total=len(json_paths_preprocessed)))
+
+def main() -> None:
+    # Preprocessed files from Wikia-and-Wikipedia-EL-Dataset-Creator
     json_paths_preprocessed = all_json_filepath_getter_from_preprocessed_jawiki(dirpath=JAWIKI_PREPROCESSED_DATA_DIRPATH)
 
     # dirpath create for sudachi preprocessing
     dirpaths_preprocessed = all_json_dirpath_getter_from_preprocessed_jawiki(dirpath=JAWIKI_PREPROCESSED_DATA_DIRPATH)
-    new_dirpaths_for_sudachi = [dirpath.replace('preprocessed_jawiki', 'preprocessed_jawiki_sudachi') for dirpath in dirpaths_preprocessed]
+
+    new_dirpaths_for_sudachi = [dirpath.replace('preprocessed_jawiki', 'preprocessed_jawiki_sudachi') for dirpath
+                                in dirpaths_preprocessed]
+
     for dirpath in new_dirpaths_for_sudachi:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-    main(json_paths_preprocessed)
+    multi_preprocess(json_paths_preprocessed)
+
+if __name__ == '__main__':
+    main()
