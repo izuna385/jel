@@ -3,6 +3,9 @@ import sys, json
 from distutils.util import strtobool
 
 class BiEncoderExperiemntParams:
+    '''
+    Configuration files for training biencoder.
+    '''
     def __init__(self):
         parser = argparse.ArgumentParser(description='Japanese Entity linker parameters for experiment')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
@@ -26,7 +29,8 @@ class BiEncoderExperiemntParams:
         # bert and chive is currently available.
         parser.add_argument('-word_langs_for_training', action='store', default='chive', type=str)
 
-        self.opts = parser.parse_args(sys.argv[1:])
+        self.all_opts = parser.parse_known_args(sys.argv[1:])
+        self.opts = self.all_opts[0]
         print('\n===PARAMETERS===')
         for arg in vars(self.opts):
             print(arg, getattr(self.opts, arg))
