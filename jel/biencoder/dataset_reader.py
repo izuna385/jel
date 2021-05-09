@@ -3,7 +3,7 @@ ja-wiki dataset reader for training bi-encoder
 '''
 from overrides import overrides
 from allennlp.data import Instance
-from allennlp.data.dataset_readers import DatasetReader
+from allennlp.data.dataset_readers import DatasetReader, DatasetReaderInput
 from allennlp.data.fields import SpanField, ListField, TextField, MetadataField, ArrayField, SequenceLabelField, LabelField
 from allennlp.data.fields import LabelField, TextField
 from allennlp.data.tokenizers import Token, Tokenizer, WhitespaceTokenizer
@@ -97,33 +97,31 @@ class SmallJaWikiReader(DatasetReader):
         return id2title, title2id, id2ent_doc
 
     @overrides
-    def _read(self, train_dev_test_flag: str) -> Iterator[Instance]:
+    def _read(self, file_path: DatasetReaderInput) -> Iterator[Instance]:
         '''
         :param train_dev_test_flag: 'train', 'dev', 'test'
-        :return: list of instances
+        :return: yield instances
         '''
-        if train_dev_test_flag == 'train':
+        if file_path == 'train':
             dataset = self._train_loader()
             random.shuffle(dataset)
-        elif train_dev_test_flag == 'dev':
+        elif file_path == 'dev':
             dataset = self._dev_loader()
-        elif train_dev_test_flag == 'test':
+        elif file_path == 'test':
             dataset = self._test_loader()
         else:
             raise NotImplementedError(
-                "{} is not a valid flag. Choose from train, dev and test".format(train_dev_test_flag))
+                "{} is not a valid flag. Choose from train, dev and test".format(file_path))
 
         if self.config.debug:
             dataset = dataset[:self.config.debug_data_num]
 
         for data in tqdm(enumerate(dataset)):
-            # try:
-            data = self._one_line_parser(data=data, train_dev_test_flag=train_dev_test_flag)
-            yield self.text_to_instance(data)
-            #
-            # except:
-            #     print("parseError", data[1]["anchor_sent"])
-            #     continue
+            try:
+                data = self._one_line_parser(data=data, train_dev_test_flag=file_path)
+                yield self.text_to_instance(data)
+            except:
+                continue
 
     def _one_line_parser(self, data, train_dev_test_flag='train') -> dict:
         mention_idx, mention_data = int(data[0]), data[1]

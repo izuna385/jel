@@ -7,10 +7,12 @@ from allennlp.data import (
     Vocabulary,
     TextFieldTensors,
 )
-from allennlp.data.data_loaders import SimpleDataLoader
+from allennlp.data.data_loaders import SimpleDataLoader, MultiProcessDataLoader
 from allennlp.models import Model
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
+from typing import List, Tuple, Any, Dict, Iterable, Iterator
+
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
     print("Building the vocabulary")
@@ -18,13 +20,11 @@ def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
 
 
 def build_data_loaders(config,
-    train_data: List[Instance],
-    dev_data: List[Instance],
-    test_data: List[Instance]) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    dataset_reader: DatasetReader) -> Tuple[MultiProcessDataLoader, MultiProcessDataLoader, MultiProcessDataLoader]:
 
-    train_loader = SimpleDataLoader(train_data, config.batch_size_for_train, shuffle=False)
-    dev_loader = SimpleDataLoader(dev_data, config.batch_size_for_eval, shuffle=False)
-    test_loader = SimpleDataLoader(test_data, config.batch_size_for_eval, shuffle=False)
+    train_loader = MultiProcessDataLoader(dataset_reader, data_path='train', batch_size=config.batch_size_for_train, shuffle=False)
+    dev_loader = MultiProcessDataLoader(dataset_reader, data_path='dev', batch_size=config.batch_size_for_eval, shuffle=False)
+    test_loader = MultiProcessDataLoader(dataset_reader, data_path='test', batch_size=config.batch_size_for_eval, shuffle=False)
 
     return train_loader, dev_loader, test_loader
 

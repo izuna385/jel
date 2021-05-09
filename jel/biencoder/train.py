@@ -11,12 +11,15 @@ from typing import Iterable, List, Tuple
 from allennlp.modules.seq2vec_encoders import Seq2VecEncoder
 from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
 
-def biencoder_training() -> Tuple[BasicTextFieldEmbedder, Seq2VecEncoder, Seq2VecEncoder]:
+def biencoder_training(debug=False) -> Tuple[BasicTextFieldEmbedder, Seq2VecEncoder, Seq2VecEncoder]:
     '''
     :return: embedder, mention_encoder, entity_encoder
     '''
     params = BiEncoderExperiemntParams()
     config = params.opts
+    if debug:
+        config.debug = True
+
     reader = SmallJaWikiReader(config=config)
 
     # Loading Datasets
@@ -24,10 +27,7 @@ def biencoder_training() -> Tuple[BasicTextFieldEmbedder, Seq2VecEncoder, Seq2Ve
     vocab = build_vocab(train)
     vocab.extend_from_instances(dev)
 
-    # TODO: avoid memory consumption and lazy loading
-    train, dev, test = list(reader.read('train')), list(reader.read('dev')), list(reader.read('test'))
-
-    train_loader, dev_loader, test_loader = build_data_loaders(config, train, dev, test)
+    train_loader, dev_loader, test_loader = build_data_loaders(config, reader)
     train_loader.index_with(vocab)
     dev_loader.index_with(vocab)
 
