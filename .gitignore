@@ -2,6 +2,8 @@
 ./data/preprocessed/**
 ./data/preprocessed_jawiki/*
 ./data/preprocessed_jawiki/**
+./data/preprocessed_jawiki_sudachi/*
+./data/preprocessed_jawiki_sudachi/**
 ./.idea/*
 ./__pycache__/*
 ./jel/__pycache__/*
