@@ -1,5 +1,7 @@
 from typing import Iterable, List, Tuple
 import torch
+import os
+import shutil
 from allennlp.data import (
     DataLoader,
     DatasetReader,
@@ -30,6 +32,7 @@ def build_data_loaders(config,
 
 def build_trainer(
     lr: float,
+    serialization_dir: str,
     num_epochs: int,
     model: Model,
     train_loader: DataLoader,
@@ -39,12 +42,19 @@ def build_trainer(
     optimizer = AdamOptimizer(parameters, lr=lr)
     if torch.cuda.is_available():
         model.cuda()
+
+    # remove serialization dir
+    if os.path.exists(serialization_dir):
+        shutil.rmtree(serialization_dir)
+    os.makedirs(serialization_dir)
+
     trainer = GradientDescentTrainer(
         model=model,
         data_loader=train_loader,
         validation_data_loader=dev_loader,
         num_epochs=num_epochs,
         optimizer=optimizer,
+        serialization_dir=serialization_dir,
         cuda_device=0 if torch.cuda.is_available() else -1
     )
 

@@ -45,6 +45,7 @@ def biencoder_training(debug=False) -> Tuple[BasicTextFieldEmbedder, Seq2VecEnco
     model = Biencoder(config, mention_encoder, entity_encoder, vocab)
 
     trainer = build_trainer(lr=config.lr,
+                            serialization_dir=config.serialization_dir,
                             num_epochs=config.num_epochs,
                             model=model,
                             train_loader=train_loader,
