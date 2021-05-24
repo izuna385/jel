@@ -29,22 +29,27 @@ class Biencoder(Model):
         self.istrainflag = 1 # Immutable
 
     def forward(self,
-                context: torch.Tensor = None,
+                context = None,
                 gold_ent_idx: torch.Tensor = None,
                 gold_title_and_def: torch.Tensor = None,
                 mention: torch.Tensor = None,
                 gold_title: torch.Tensor = None,
                 gold_ent_desc: torch.Tensor = None
                 ):
+        if gold_ent_idx == None and gold_title_and_def == None and gold_title == None and gold_ent_desc == None:
+            contextualized_mention = self.mention_encoder(mention, context)
+
+            return {'contextualized_mention': contextualized_mention}
+
         if self.config.word_langs_for_training == 'bert':
             batch_num = context['tokens']['token_ids'].size(0)
-            device = torch.get_device(context['tokens']['token_ids']) if torch.cuda.is_available() else torch.device(
+            device = context['tokens']['token_ids'].get_device() if torch.cuda.is_available() else torch.device(
                 'cpu')
             contextualized_mention = self.mention_encoder(context)
             encoded_entites = self.entity_encoder(cano_and_def_concatnated_text=gold_title_and_def)
         elif self.config.word_langs_for_training == 'chive':
             batch_num = context['tokens']['tokens'].size(0)
-            device = torch.get_device(context['tokens']['tokens']) if torch.cuda.is_available() else torch.device(
+            device = context['tokens']['tokens'].get_device() if torch.cuda.is_available() else torch.device(
                 'cpu')
             contextualized_mention = self.mention_encoder(mention, context)
             encoded_entites = self.entity_encoder(gold_title, gold_ent_desc)
