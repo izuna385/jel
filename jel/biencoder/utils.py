@@ -7,14 +7,14 @@ from allennlp.data import (
     DatasetReader,
     Instance,
     Vocabulary,
-    TextFieldTensors,
 )
-from allennlp.data.data_loaders import SimpleDataLoader, MultiProcessDataLoader
+from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
+from allennlp.data.data_loaders import MultiProcessDataLoader
 from allennlp.models import Model
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
 from typing import List, Tuple, Any, Dict, Iterable, Iterator
-
+from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, LstmSeq2VecEncoder, BagOfEmbeddingsEncoder
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
     print("Building the vocabulary")
@@ -31,6 +31,7 @@ def build_data_loaders(config,
     return train_loader, dev_loader, test_loader
 
 def build_trainer(
+    config,
     lr: float,
     serialization_dir: str,
     num_epochs: int,
@@ -44,9 +45,11 @@ def build_trainer(
         model.cuda()
 
     # remove serialization dir
-    if os.path.exists(serialization_dir):
+    if os.path.exists(serialization_dir) and config.shutil_pre_finished_experiment:
         shutil.rmtree(serialization_dir)
-    os.makedirs(serialization_dir)
+
+    if not os.path.exists(serialization_dir):
+        os.makedirs(serialization_dir)
 
     trainer = GradientDescentTrainer(
         model=model,
@@ -59,3 +62,20 @@ def build_trainer(
     )
 
     return trainer
+
+def _encoder_saver(encoder:Seq2VecEncoder,
+                  path: str) -> None:
+    torch.save(encoder.state_dict(), path)
+
+def _encoder_loader(encoder: Seq2VecEncoder,
+                   embedder: BasicTextFieldEmbedder,
+                   path: str) -> Seq2VecEncoder:
+    model = encoder(embedder)
+    model.load_state_dict(torch.load(path))
+
+    return model
+
+def _vocab_loader(vocab_dir_path: str) -> Vocabulary:
+    vocab = Vocabulary.from_files(directory=vocab_dir_path)
+
+    return vocab

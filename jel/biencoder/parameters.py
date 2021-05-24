@@ -10,8 +10,10 @@ class BiEncoderExperiemntParams:
         parser = argparse.ArgumentParser(description='Japanese Entity linker parameters for experiment')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
         parser.add_argument('-debug_data_num', action='store', default=1000, type=int)
+        parser.add_argument('-vocab_dir', action='store', default='./resources/vocab_dir/', type=str)
         parser.add_argument('-serialization_dir', action='store',
                             default='./resources/serialization_dir/chive_boe/', type=str)
+        parser.add_argument('-shutil_pre_finished_experiment', action='store', default=False, type=strtobool)
         parser.add_argument('-biencoder_dataset_file_path', action='store', default='./data/jawiki_small_dataset_sudachi/data.json', type=str)
         parser.add_argument('-title2doc_file_path', action='store', default='./data/jawiki_small_dataset_sudachi/title2doc.json', type=str)
 
