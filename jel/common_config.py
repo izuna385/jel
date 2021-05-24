@@ -8,3 +8,6 @@ CANONICAL_AND_DEF_BERT_CONNECT_TOKEN = '[unused3]'
 CLS_TOKEN = '[CLS]'
 SEP_TOKEN = '[SEP]'
 MENTION_ANCHORS_REGEX = r'<a>|</a>'
+
+ENCODER_DIRPATH = './resources/encoders/'
+MODEL_TAR_GZ_DIRPATH = './resources/'

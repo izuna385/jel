@@ -63,19 +63,17 @@ def build_trainer(
 
     return trainer
 
-def _encoder_saver(encoder:Seq2VecEncoder,
+def encoder_saver(encoder:Seq2VecEncoder,
                   path: str) -> None:
     torch.save(encoder.state_dict(), path)
 
-def _encoder_loader(encoder: Seq2VecEncoder,
-                   embedder: BasicTextFieldEmbedder,
+def encoder_loader(encoder: Seq2VecEncoder,
                    path: str) -> Seq2VecEncoder:
-    model = encoder(embedder)
-    model.load_state_dict(torch.load(path))
+    encoder.load_state_dict(torch.load(path))
 
-    return model
+    return encoder
 
-def _vocab_loader(vocab_dir_path: str) -> Vocabulary:
+def vocab_loader(vocab_dir_path: str) -> Vocabulary:
     vocab = Vocabulary.from_files(directory=vocab_dir_path)
 
     return vocab
