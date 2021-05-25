@@ -13,3 +13,4 @@
 ./japanese_bert/*
 ./.pytest_cache/*
 ./resources/*
+./.pytest_cache/**
