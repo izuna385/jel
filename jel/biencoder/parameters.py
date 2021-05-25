@@ -26,7 +26,7 @@ class BiEncoderExperiemntParams:
         parser.add_argument('-max_ent_desc_token_size', action='store', default=100, type=int)
 
         parser.add_argument('-lr', action='store', default=5e-3, type=float)
-        parser.add_argument('-num_epochs', action='store', default=2, type=int)
+        parser.add_argument('-num_epochs', action='store', default=10, type=int)
         parser.add_argument('-batch_size_for_train', action='store', default=4096, type=int)
         parser.add_argument('-batch_size_for_eval', action='store', default=4096, type=int)
 
