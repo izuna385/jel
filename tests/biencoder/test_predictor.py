@@ -1,7 +1,9 @@
-from jel.biencoder.predictor import mention_predictor_loader
+from jel.biencoder.predictor import predictors_loader
 
-def test_mention_predictor_loader():
-    predictor = predictor_loader()
+def test_predictors_loader():
+    mention_predictor, entity_predictor = predictors_loader()
     # currently, only chive mention encoder is supported.
-    assert len(predictor.predict('今日は<a>品川</a>に行った。')['contextualized_mention']) == 300
+    assert len(mention_predictor.predict('今日は<a>品川</a>に行った。')['contextualized_mention']) == 300
+    assert len(entity_predictor.predict(gold_title="隅田川",
+                                        gold_ent_desc="花火がよく上がる")['contextualized_entity']) == 300
 

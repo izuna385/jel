@@ -266,7 +266,7 @@ class SmallJaWikiReader(DatasetReader):
     @overrides
     def text_to_instance(self, data=None) -> Instance:
 
-        if type(data) == str:
+        if type(data) == str: # for predict mention
             anchor_sent = data
             tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
 
@@ -280,6 +280,21 @@ class SmallJaWikiReader(DatasetReader):
             context_field = TextField(data['context'], self.token_indexers)
             fields = {"context": context_field}
             fields['mention'] = TextField(data['mention'], self.token_indexers)
+
+            return Instance(fields)
+
+        if "gold_title" in data and "gold_ent_desc" in data and "context" not in data:
+            fields = {}
+
+            tokenized_title = self.tokenizer.tokenize(txt=data["gold_title"])[:self.config.max_title_token_size]
+            tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt="gold_ent_desc")[
+                                        :self.config.max_ent_desc_token_size]
+
+            data['gold_title'] = [Token(t) for t in tokenized_title]
+            data['gold_ent_desc'] = [Token(t) for t in tokenized_ent_desc_tokens]
+
+            fields['gold_title'] = TextField(data['gold_title'], self.token_indexers)
+            fields['gold_ent_desc'] = TextField(data['gold_ent_desc'], self.token_indexers)
 
             return Instance(fields)
 
