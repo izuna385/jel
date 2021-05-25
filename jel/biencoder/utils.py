@@ -1,7 +1,4 @@
-from typing import Iterable, List, Tuple
 import torch
-import os
-import shutil
 from allennlp.data import (
     DataLoader,
     DatasetReader,
@@ -15,6 +12,13 @@ from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
 from typing import List, Tuple, Any, Dict, Iterable, Iterator
 from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, LstmSeq2VecEncoder, BagOfEmbeddingsEncoder
+import logging
+import os
+import shutil
+
+
+logger = logging.getLogger(__name__)
+
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
     print("Building the vocabulary")

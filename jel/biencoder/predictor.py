@@ -17,10 +17,14 @@ from jel.biencoder.encoder import (
     )
 from jel.biencoder.model import Biencoder
 from jel.utils.embedder import bert_emb_returner, chive_emb_returner
-from jel.common_config import ENCODER_DIRPATH
-import os
+
 import numpy as np
-import pdb
+import logging
+import os
+
+from jel.common_config import ENCODER_DIRPATH
+
+logger = logging.getLogger(__name__)
 
 class MentionPredictor(Predictor):
     def predict(self, sentence: str) -> JsonDict:
@@ -29,6 +33,25 @@ class MentionPredictor(Predictor):
     def _json_to_instance(self, json_dict: JsonDict) -> Instance:
         sentence = json_dict["anchor_sent"]
         return self._dataset_reader.text_to_instance(sentence)
+
+def mention_predictor_loader():
+    params = BiEncoderExperiemntParams()
+    config = params.opts
+    reader = SmallJaWikiReader(config=config)
+
+    vocab = vocab_loader(config.vocab_dir)
+    embedder = chive_emb_returner(vocab=vocab)
+    mention_encoder, entity_encoder = ChiveMentionEncoder(word_embedder=embedder), \
+                                      ChiveEntityEncoder(word_embedder=embedder)
+    mention_encoder = encoder_loader(encoder=mention_encoder,
+                                     path=os.path.join(ENCODER_DIRPATH, 'mention_encoder.th'))
+    entity_encoder = encoder_loader(encoder=entity_encoder,
+                                     path=os.path.join(ENCODER_DIRPATH, 'entity_encoder.th'))
+    model = Biencoder(config, mention_encoder, entity_encoder, vocab)
+    predictor = MentionPredictor(model=model,dataset_reader=reader)
+
+    return predictor
+
 
 
 if __name__ == '__main__':
