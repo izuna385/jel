@@ -1,14 +1,14 @@
 import json
 import spacy
 import logging
-from typing import Tuple, List,Dict
+from typing import Tuple, List, Dict
 logger = logging.getLogger(__name__)
 
 logger.debug(msg='loading ja_core_news_md')
 nlp = spacy.load('ja_core_news_md')
 logger.debug(msg='loading ja_core_news_md finished.')
 
-def jopen(file_path: str) -> dict:
+def jopen(file_path: str):
     with open(file_path, 'r') as f:
         j = json.load(f)
 
