@@ -286,10 +286,14 @@ class SmallJaWikiReader(DatasetReader):
         if "gold_title" in data and "gold_ent_desc" in data and "context" not in data:
             fields = {}
 
-            tokenized_title = self.tokenizer.tokenize(txt=data["gold_title"])[:self.config.max_title_token_size]
-            tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt="gold_ent_desc")[
-                                        :self.config.max_ent_desc_token_size]
-
+            if type(data["gold_title"]) == str and type(data["gold_ent_desc"]) == str:
+                tokenized_title = self.tokenizer.tokenize(txt=data["gold_title"])[:self.config.max_title_token_size]
+                tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt=data["gold_ent_desc"])[
+                                            :self.config.max_ent_desc_token_size]
+            else:
+                # For encoding all entities. See jel.collect_entity_data.py
+                tokenized_title = data["gold_title"]
+                tokenized_ent_desc_tokens = data["gold_ent_desc"]
             data['gold_title'] = [Token(t) for t in tokenized_title]
             data['gold_ent_desc'] = [Token(t) for t in tokenized_ent_desc_tokens]
 
