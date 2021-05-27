@@ -1,32 +1,86 @@
 <p align="center"><img width="20%" src="docs/jel-logo.png"></p>
 
 # jel: Japanese Entity Linker
-* Lightweight linker (with sudachi) and transformer-based linker are suppported.
+* jel - Japanese Entity Linker - is Bi-encoder based entity linker for japanese.
+
+# Usage
+* Currently, `link` and `question` methods are supported.
+
+## `el.link`
+* This returnes named entity and its candidate ones from Wikipedia titles.
+```python
+from jel import EntityLinker
+el = EntityLinker()
+
+el.link('今日は東京都のマックにアップルを買いに行き、スティーブジョブスとドナルドに会い、堀田区に引っ越した。')
+>> [
+    {
+        "text": "東京都",
+        "label": "GPE",
+        "span": [
+            3,
+            6
+        ],
+        "predicted_normalized_entities": [
+            [
+                "東京都庁",
+                0.1084
+            ],
+            [
+                "東京",
+                0.0633
+            ],
+            [
+                "国家地方警察東京都本部",
+                0.0604
+            ],
+            [
+                "東京都",
+                0.0598
+            ],
+            ...
+        ]
+    },
+    {
+        "text": "アップル",
+        "label": "ORG",
+        "span": [
+            11,
+            15
+        ],
+        "predicted_normalized_entities": [
+            [
+                "アップル",
+                0.2986
+            ],
+            [
+                "アップル インコーポレイテッド",
+                0.1792
+            ],
+            …
+        ]
+    }
+```
+
+## `el.question`
+* This returnes candidate entity for any question from Wikipedia titles.
+```python
+>>> linker.question('日本の総理大臣は？')
+[('菅内閣', 0.05791765857101555), ('枢密院', 0.05592481946602986), ('党', 0.05430194711042564), ('総選挙', 0.052795400668513175)]
+```
+
+## Setup
+NOTE: This is an interim setup method. In the future, it is expected that more simpler method of setup will be available.
+* Download [`resources.zip`](https://drive.google.com/drive/folders/11jwmddofQwiH1HSTRwAOAv6-EHUMgI5z?usp=sharing) and unzip.
+
+* run `pip install -r requirements.txt; python3 setup.py install`
 
 ## Test
 `$ python pytest`
 
-## Development
-*  `export PYTHONPATH="/Users/your_name/Desktop/github/jel/jel:${PYTHONPATH}"`
-
-## memo
-### BERT
-* @ batch_size_for_train with bert, 1,07iter / s. @batch_size_for_eval with 128, 1.61 iter/s
-
-### BOE
-
-### Other
-* add SWEM.
-
-## setup for sudachi experiment.
-```
-$ python3 ./scripts/sudachi_preprocess.py
-$ python3 ./scripts/small_dataset_creator.py
-$ python3 ./scripts/biencoder_training_check.py
-```
-
 ## Notes
 * faiss==1.5.3 from pip causes error _swigfaiss. 
+* To solve this, see [this issue](https://github.com/facebookresearch/faiss/issues/821#issuecomment-573531694).
 
 ## LICENSE
 Apache 2.0 License.
