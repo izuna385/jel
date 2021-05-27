@@ -1,13 +1,9 @@
-import json
 from jel.utils.common import jopen
 from glob import glob
-from typing import List, Tuple, Dict
-import pdb
 from jel.biencoder.predictor import predictors_loader
 from tqdm import tqdm
 import os
-ENTITY_DATA_PATH = './data/preprocessed_jawiki_sudachi/**/*'
-ENTITY_VEC_DIR_PATH = './resources/entity_name2vec/'
+from jel.common_config import ENTITY_DATA_PATH, ENTITY_VEC_DIR_PATH
 import logging
 import pickle
 logger = logging.getLogger(__name__)
@@ -18,7 +14,7 @@ class EntityCollector:
                  max_token_in_one_entity_name: int =10,
                  max_token_in_one_sentence_of_entity_desc: int = 100,
                  max_sent_from_one_entity: int = 3,
-                 debug: bool = True):
+                 debug: bool = False):
         self.json_paths = glob(ENTITY_DATA_PATH+'.json')
         print('all jsons:', len(self.json_paths))
         if debug:
@@ -72,6 +68,7 @@ class EntityCollector:
             self._batched_entity_name2vec_dumper(unique_idx=idx,
                                                  batched_entity_names=batched_entity_names,
                                                  vecs=batched_entity_vecs)
+
 
 if __name__ == '__main__':
     entity_collector = EntityCollector()
