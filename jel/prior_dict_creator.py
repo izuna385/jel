@@ -59,9 +59,9 @@ def _m2e_collector(dataset_dir: str,
         json.dump(m2prior_dict, pdp, ensure_ascii=False, indent=4, sort_keys=False, separators=(',', ': '))
 
 
-if __name__ == '__main__':
-    dataset_dir = './data/preprocessed_jawiki_sudachi/'
-    prior_dict_path='./resources/prior_dict.json'
-    _m2e_collector(dataset_dir=dataset_dir,
-                   prior_dict_path=prior_dict_path,
-                   debug=False)
+# if __name__ == '__main__':
+#     dataset_dir = './data/preprocessed_jawiki_sudachi/'
+#     prior_dict_path='./resources/prior_dict.json'
+#     _m2e_collector(dataset_dir=dataset_dir,
+#                    prior_dict_path=prior_dict_path,
+#                    debug=False)
