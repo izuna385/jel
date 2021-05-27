@@ -17,8 +17,8 @@ from jel.utils.tokenizer import (
     SudachiTokenizer
 )
 import numpy as np
-from multiprocessing import Pool
-import multiprocessing as multi
+import logging
+logger = logging.getLogger(__name__)
 
 from jel.common_config import (
     MENTION_ANCHORS,
@@ -49,9 +49,7 @@ class SmallJaWikiReader(DatasetReader):
             raise NotImplementedError
 
         self.eval = eval
-
-        # kb_load
-        self.id2title, self.title2id, self.id2ent_doc = self._kb_loader()
+        # self._kb_loader()
 
     def _tokenizer_loader(self, resource_save_dir: str) -> None:
         if self.config.word_langs_for_training == 'bert':
@@ -81,6 +79,7 @@ class SmallJaWikiReader(DatasetReader):
         return jopen(file_path=self.config.title2doc_file_path)
 
     def _kb_loader(self) -> Tuple[Dict[int, Any], Dict[Any, int], Dict[int, Any]]:
+        logger.debug(msg='loading kb dataset')
         title2ent_doc = self._title2doc_loader()
 
         id2title, title2id, id2ent_doc = {}, {}, {}
@@ -94,7 +93,7 @@ class SmallJaWikiReader(DatasetReader):
                 title2id.update({title: idx})
                 id2ent_doc.update({idx: ent_doc})
 
-        return id2title, title2id, id2ent_doc
+        self.id2title, self.title2id, self.id2ent_doc = id2title, title2id, id2ent_doc
 
     @overrides
     def _read(self, file_path: DatasetReaderInput) -> Iterator[Instance]:
@@ -266,16 +265,61 @@ class SmallJaWikiReader(DatasetReader):
 
     @overrides
     def text_to_instance(self, data=None) -> Instance:
+
+        if type(data) == str: # for predict mention
+            if '<a>' in data and '</a>' in data:
+                anchor_sent = data
+                tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
+
+                mention_tokens, tokenized_context_including_target_anchors = self._mention_split_tokens_converter(
+                    tokenized_context_including_target_anchors)
+                mention_tokens = [Token(t) for t in mention_tokens]
+                tokenized_context_including_target_anchors = [Token(t) for t in tokenized_context_including_target_anchors
+                                                              if t not in MENTION_ANCHORS]
+            else:
+                sentence = self.tokenizer.tokenize(txt=data)
+                mention_tokens = [Token(t) for t in sentence]
+                tokenized_context_including_target_anchors = mention_tokens
+
+            data = {'context': tokenized_context_including_target_anchors}
+            data['mention'] = mention_tokens
+
+            context_field = TextField(data['context'], self.token_indexers)
+            fields = {"context": context_field}
+            fields['mention'] = TextField(data['mention'], self.token_indexers)
+
+            return Instance(fields)
+
+        if "gold_title" in data and "gold_ent_desc" in data and "context" not in data:
+            fields = {}
+
+            if type(data["gold_title"]) == str and type(data["gold_ent_desc"]) == str:
+                tokenized_title = self.tokenizer.tokenize(txt=data["gold_title"])[:self.config.max_title_token_size]
+                tokenized_ent_desc_tokens = self.tokenizer.tokenize(txt=data["gold_ent_desc"])[
+                                            :self.config.max_ent_desc_token_size]
+            else:
+                # For encoding all entities. See jel.collect_entity_data.py
+                tokenized_title = data["gold_title"]
+                tokenized_ent_desc_tokens = data["gold_ent_desc"]
+            data['gold_title'] = [Token(t) for t in tokenized_title]
+            data['gold_ent_desc'] = [Token(t) for t in tokenized_ent_desc_tokens]
+
+            fields['gold_title'] = TextField(data['gold_title'], self.token_indexers)
+            fields['gold_ent_desc'] = TextField(data['gold_ent_desc'], self.token_indexers)
+
+            return Instance(fields)
+
         context_field = TextField(data['context'], self.token_indexers)
         fields = {"context": context_field}
 
-        fields['gold_ent_idx'] = ArrayField(np.array(data['gold_ent_idx']))
-
         if self.config.word_langs_for_training == 'bert':
-            fields['gold_title_and_def'] = TextField(data['gold_title_and_def'], self.token_indexers)
+            if 'gold_ent_idx' in data:
+                fields['gold_ent_idx'] = ArrayField(np.array(data['gold_ent_idx']))
+                fields['gold_title_and_def'] = TextField(data['gold_title_and_def'], self.token_indexers)
         elif self.config.word_langs_for_training == 'chive':
             fields['mention'] = TextField(data['mention'], self.token_indexers)
-            fields['gold_title'] = TextField(data['gold_title'], self.token_indexers)
-            fields['gold_ent_desc'] = TextField(data['gold_ent_desc'], self.token_indexers)
+            if 'gold_ent_idx' in data:
+                fields['gold_title'] = TextField(data['gold_title'], self.token_indexers)
+                fields['gold_ent_desc'] = TextField(data['gold_ent_desc'], self.token_indexers)
 
         return Instance(fields)

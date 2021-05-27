@@ -1,17 +1,23 @@
-from typing import Iterable, List, Tuple
 import torch
 from allennlp.data import (
     DataLoader,
     DatasetReader,
     Instance,
     Vocabulary,
-    TextFieldTensors,
 )
-from allennlp.data.data_loaders import SimpleDataLoader, MultiProcessDataLoader
+from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
+from allennlp.data.data_loaders import MultiProcessDataLoader
 from allennlp.models import Model
 from allennlp.training.optimizers import AdamOptimizer
 from allennlp.training.trainer import Trainer, GradientDescentTrainer
 from typing import List, Tuple, Any, Dict, Iterable, Iterator
+from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, LstmSeq2VecEncoder, BagOfEmbeddingsEncoder
+import logging
+import os
+import shutil
+
+
+logger = logging.getLogger(__name__)
 
 
 def build_vocab(instances: Iterable[Instance]) -> Vocabulary:
@@ -29,7 +35,9 @@ def build_data_loaders(config,
     return train_loader, dev_loader, test_loader
 
 def build_trainer(
+    config,
     lr: float,
+    serialization_dir: str,
     num_epochs: int,
     model: Model,
     train_loader: DataLoader,
@@ -39,13 +47,37 @@ def build_trainer(
     optimizer = AdamOptimizer(parameters, lr=lr)
     if torch.cuda.is_available():
         model.cuda()
+
+    # remove serialization dir
+    if os.path.exists(serialization_dir) and config.shutil_pre_finished_experiment:
+        shutil.rmtree(serialization_dir)
+
+    if not os.path.exists(serialization_dir):
+        os.makedirs(serialization_dir)
+
     trainer = GradientDescentTrainer(
         model=model,
         data_loader=train_loader,
         validation_data_loader=dev_loader,
         num_epochs=num_epochs,
         optimizer=optimizer,
+        serialization_dir=serialization_dir,
         cuda_device=0 if torch.cuda.is_available() else -1
     )
 
     return trainer
+
+def encoder_saver(encoder:Seq2VecEncoder,
+                  path: str) -> None:
+    torch.save(encoder.state_dict(), path)
+
+def encoder_loader(encoder: Seq2VecEncoder,
+                   path: str) -> Seq2VecEncoder:
+    encoder.load_state_dict(torch.load(path))
+
+    return encoder
+
+def vocab_loader(vocab_dir_path: str) -> Vocabulary:
+    vocab = Vocabulary.from_files(directory=vocab_dir_path)
+
+    return vocab
