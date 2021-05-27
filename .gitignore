@@ -1,5 +1,7 @@
 ./exp_logs/
 ./exp_logs/*
+./data/**
+./data/*
 ./data/preprocessed/*
 ./data/preprocessed/**
 ./data/preprocessed_jawiki/*
