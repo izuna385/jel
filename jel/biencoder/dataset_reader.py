@@ -267,16 +267,23 @@ class SmallJaWikiReader(DatasetReader):
     def text_to_instance(self, data=None) -> Instance:
 
         if type(data) == str: # for predict mention
-            anchor_sent = data
-            tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
+            if '<a>' in data and '</a>' in data:
+                anchor_sent = data
+                tokenized_context_including_target_anchors = self.tokenizer.tokenize(txt=anchor_sent)
 
-            mention_tokens, tokenized_context_including_target_anchors = self._mention_split_tokens_converter(
-                tokenized_context_including_target_anchors)
-            mention_tokens = [Token(t) for t in mention_tokens]
-            tokenized_context_including_target_anchors = [Token(t) for t in tokenized_context_including_target_anchors
-                                                          if t not in MENTION_ANCHORS]
+                mention_tokens, tokenized_context_including_target_anchors = self._mention_split_tokens_converter(
+                    tokenized_context_including_target_anchors)
+                mention_tokens = [Token(t) for t in mention_tokens]
+                tokenized_context_including_target_anchors = [Token(t) for t in tokenized_context_including_target_anchors
+                                                              if t not in MENTION_ANCHORS]
+            else:
+                sentence = self.tokenizer.tokenize(txt=data)
+                mention_tokens = [Token(t) for t in sentence]
+                tokenized_context_including_target_anchors = mention_tokens
+
             data = {'context': tokenized_context_including_target_anchors}
             data['mention'] = mention_tokens
+
             context_field = TextField(data['context'], self.token_indexers)
             fields = {"context": context_field}
             fields['mention'] = TextField(data['mention'], self.token_indexers)
