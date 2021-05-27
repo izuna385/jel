@@ -34,8 +34,15 @@ def biencoder_train_and_save_params(debug=False) -> Tuple[BasicTextFieldEmbedder
     train, dev, test = reader.read('train'), reader.read('dev'), reader.read('test')
     vocab = build_vocab(train)
     vocab.extend_from_instances(dev), vocab.extend_from_instances(test)
+    try:
+        shutil.rmtree(config.vocab_dir)
+    except:
+        pass
+    try:
+        os.makedirs(config.vocab_dir)
+    except:
+        pass
 
-    shutil.rmtree(config.vocab_dir), os.makedirs(config.vocab_dir)
     vocab.save_to_files(config.vocab_dir)
 
     train_loader, dev_loader, test_loader = build_data_loaders(config, reader)
