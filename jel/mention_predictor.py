@@ -2,13 +2,18 @@ from jel.kb import TitleIndexerWithFaiss
 from jel.biencoder.predictor import predictors_loader
 from jel.utils.common import return_ner_span
 import pdb
+import os
 from jel.common_config import PRIOR_DICT_PATH
 import json
 from typing import List, Tuple, Dict
 import numpy as np
+from jel.file_cache import resource_downloader
+from jel.common_config import CACHE_ROOT
 
 class EntityLinker:
     def __init__(self):
+        if not os.path.exists(str(CACHE_ROOT)+'/resources.zip'):
+            resource_downloader()
         self.mention_predictor, _ = predictors_loader()
         self.kb = TitleIndexerWithFaiss()
         self.prior_dict = self._mention2cand_entity_dict_loader()

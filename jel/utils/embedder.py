@@ -8,6 +8,7 @@ from allennlp.data import (
     Vocabulary,
     TextFieldTensors,
 )
+from jel.common_config import CACHE_ROOT
 from allennlp.modules.token_embedders.embedding import _read_embeddings_from_text_file
 
 def bert_emb_returner():
@@ -23,7 +24,7 @@ def chive_emb_returner(vocab: Vocabulary) -> BasicTextFieldEmbedder:
 
     token_embedding = Embedding(num_embeddings=vocab.get_vocab_size('tokens'),
                                 embedding_dim=300,
-                                pretrained_file="./resources/chive-1.1-mc30.txt",
+                                pretrained_file=str(CACHE_ROOT)+"/resources/chive-1.1-mc30.txt",
                                 vocab=vocab)
 
     return BasicTextFieldEmbedder({'tokens': token_embedding})
