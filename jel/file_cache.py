@@ -14,7 +14,7 @@ from hashlib import sha256
 import requests
 
 CACHE_ROOT = Path(os.getenv("JEL_CACHE", str(Path.home() / ".jel")))
-DATASET_CACHE = str(CACHE_ROOT / "datasets")
+DATASET_CACHE = str(CACHE_ROOT / "resources")
 
 
 def cached_path(url_or_filename: Union[str, Path], cache_dir: str = None) -> str:
