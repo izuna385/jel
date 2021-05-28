@@ -1,35 +1,17 @@
-import requests
+"""
+Utilities for working with the local dataset cache.
+"""
+import os
+from pathlib import Path
+from google_drive_downloader import GoogleDriveDownloader
+from jel.common_config import CACHE_ROOT, RESOURCES_GOOGLE_DRIVE_ID
 
-def download_file_from_google_drive(id, destination):
-    URL = "https://docs.google.com/uc?export=download"
-
-    session = requests.Session()
-
-    response = session.get(URL, params = { 'id' : id }, stream = True)
-    token = get_confirm_token(response)
-
-    if token:
-        params = { 'id' : id, 'confirm' : token }
-        response = session.get(URL, params = params, stream = True)
-
-    save_response_content(response, destination)
-
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-
-    return None
-
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk: # filter out keep-alive new chunks
-                f.write(chunk)
-
-if __name__ == "__main__":
-    file_id = '1nzG4z3Wjw5OjcY_OTnWOPYwlKDRGSxnG'
-    destination = './resources/dummy.json'
-    download_file_from_google_drive(file_id, destination)
+def resource_downloader():
+    try:
+        print('Downloading 4GB model resources.')
+        GoogleDriveDownloader.download_file_from_google_drive(file_id=RESOURCES_GOOGLE_DRIVE_ID,
+                                            dest_path=str(CACHE_ROOT)+'/resources.zip',
+                                            unzip=True)
+    except:
+        print('shutil download cache because downloading is stopped.')
+        os.remove(str(CACHE_ROOT)+'/resources.zip')
