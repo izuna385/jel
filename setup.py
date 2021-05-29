@@ -18,7 +18,7 @@ def _requirements():
 
 setup(
     name='jel',
-    version='0.1.2',
+    version='0.1.3',
     description='Japanese Entity Linker.',
     long_description=readme,
     long_description_content_type='text/markdown',
