@@ -47,7 +47,6 @@ lmdb==1.1.1
 marisa-trie==0.7.5
 MarkupSafe==1.1.1
 mecab-python3==1.0.3
-mkl-random==1.1.1
 mkl-service==2.3.0
 more-itertools==8.7.0
 multivolumefile==0.2.3
