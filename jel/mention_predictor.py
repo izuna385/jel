@@ -9,12 +9,18 @@ from typing import List, Tuple, Dict
 import numpy as np
 from jel.file_cache import resource_downloader
 from jel.common_config import CACHE_ROOT
+import logging
+logger = logging.getLogger(__name__)
+
 
 class EntityLinker:
     def __init__(self):
         if not os.path.exists(str(CACHE_ROOT)+'/resources.zip'):
+            print('Downloading predictor. This might take few minutes.')
             resource_downloader()
+        print('Loading predictor. This might take few minutes.')
         self.mention_predictor, _ = predictors_loader()
+        print('Loading kb. This might take few minutes.')
         self.kb = TitleIndexerWithFaiss()
         self.prior_dict = self._mention2cand_entity_dict_loader()
         self.candidate_ent_max_num = 10

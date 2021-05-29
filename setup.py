@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """The setup script."""
-
 import sys
 from setuptools import setup, find_packages
+from codecs import open
+from os import path
+root_dir = path.abspath(path.dirname(__file__))
 
 with open('README.md', encoding='utf-8') as readme_file:
     readme = readme_file.read()
 
 info = sys.version_info
+
+def _requirements():
+    return [name.rstrip() for name in open(path.join(root_dir, 'requirements.txt')).readlines()]
 
 setup(
     name='jel',
@@ -30,5 +35,6 @@ setup(
         'Programming Language :: Python :: 3.7',
         "Operating System :: OS Independent",
     ],
+    install_requires=_requirements(),
     test_suite="test",
 )
