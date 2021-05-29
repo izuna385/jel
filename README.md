@@ -70,7 +70,10 @@ el.link('今日は東京都のマックにアップルを買いに行き、ス�
 ```
 
 ## Setup
-`pip install jel`
+```
+$ pip install jel
+$ python -m spacy download ja_core_news_md
+```
 
 ## Test
 `$ python pytest`
