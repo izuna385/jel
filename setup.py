@@ -13,12 +13,12 @@ info = sys.version_info
 
 setup(
     name='jel',
-    version='0.1.0',
+    version='0.1.1',
     description='Japanese Entity Linker.',
     long_description=readme,
     long_description_content_type='text/markdown',
     author='izuna385',
-    author_email='izuna385',
+    author_email='izuna385@gmail.com',
     url='https://github.com/izuna385/jel',
     packages=find_packages(),
     include_package_data=True,
@@ -26,7 +26,7 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Natural Language :: English',
-        "License :: OSI Approved :: Apache 2.0",
+        "License :: OSI Approved :: Apache Software License",
         'Programming Language :: Python :: 3.7',
         "Operating System :: OS Independent",
     ],

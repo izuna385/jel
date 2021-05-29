@@ -70,10 +70,7 @@ el.link('今日は東京都のマックにアップルを買いに行き、ス�
 ```
 
 ## Setup
-NOTE: This is an interim setup method. In the future, it is expected that more simpler method of setup will be available.
-* Download [`resources.zip`](https://drive.google.com/drive/folders/11jwmddofQwiH1HSTRwAOAv6-EHUMgI5z?usp=sharing) and unzip.
-
-* run `pip install -r requirements.txt; python3 setup.py install`
+`pip install jel`
 
 ## Test
 `$ python pytest`

@@ -1,1 +1,5 @@
-recursive-include resources *
+  include *.txt
+  include pytest.ini
+  recursive-include docs *.png
+  recursive-include scripts *.py
+  recursive-include tests *.md
