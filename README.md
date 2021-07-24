@@ -75,6 +75,21 @@ $ pip install jel
 $ python -m spacy download ja_core_news_md
 ```
 
+## Run as API
+```
+$ docker build -t jel:latest .
+$ docker run -d -itd -p 8000:8000 jel
+
+# link
+$ curl localhost:8000/api/v1/link -X POST -H "Content-Type: application/json" \
+    -d '{"sentence": "日本の総理は菅総理だ。"}'
+
+# question
+$ curl localhost:8000/api/v1/question -X POST -H "Content-Type: application/json" \
+    -d '{"sentence": "日本で有名な総理は？"}
+```
+
+
 ## Test
 `$ python pytest`
 
