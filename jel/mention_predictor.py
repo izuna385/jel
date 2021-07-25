@@ -22,6 +22,7 @@ class EntityLinker:
         self.mention_predictor, _ = predictors_loader()
         print('Loading kb. This might take few minutes.')
         self.kb = TitleIndexerWithFaiss()
+        print('Loading kb finished!')
         self.prior_dict = self._mention2cand_entity_dict_loader()
         self.candidate_ent_max_num = 10
 

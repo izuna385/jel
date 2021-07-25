@@ -75,6 +75,22 @@ $ pip install jel
 $ python -m spacy download ja_core_news_md
 ```
 
+## Run as API
+```
+$ uvicorn jel.api.server:app --reload --port 8000 --host 0.0.0.0 --log-level trace
+```
+
+### Example
+```
+# link
+$ curl localhost:8000/link -X POST -H "Content-Type: application/json" \
+    -d '{"sentence": "日本の総理は菅総理だ。"}'
+
+# question
+$ curl localhost:8000/question -X POST -H "Content-Type: application/json" \
+    -d '{"sentence": "日本で有名な総理は？"}
+```
+
 ## Test
 `$ python pytest`
 

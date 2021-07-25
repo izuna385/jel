@@ -8,12 +8,18 @@ from glob import glob
 from jel.common_config import ENTITY_DATA_PATH, ENTITY_VEC_DIR_PATH, RESOURCES_DIRPATH
 from tqdm import tqdm
 import os
-import pdb
+
 
 class TitleIndexerWithFaiss:
     def __init__(self, kbemb_dim=300,
                  search_method_for_faiss='indexflatip',
                  how_many_top_hits_preserved=20):
+        '''
+        TODO: separate Entities to mysql DB
+        :param kbemb_dim:
+        :param search_method_for_faiss:
+        :param how_many_top_hits_preserved:
+        '''
         self.kbemb_dim = kbemb_dim
         self.entity_idx2emb, self.entity_id2title = self._entity2vec_loader()
         self.entity_title2id = {}
