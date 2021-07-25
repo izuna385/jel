@@ -77,18 +77,19 @@ $ python -m spacy download ja_core_news_md
 
 ## Run as API
 ```
-$ docker build -t jel:latest .
-$ docker run -d -itd -p 8000:8000 jel
+$ uvicorn jel.api.server:app --reload --port 8000 --host 0.0.0.0 --log-level trace
+```
 
+### Example
+```
 # link
-$ curl localhost:8000/api/v1/link -X POST -H "Content-Type: application/json" \
+$ curl localhost:8000/link -X POST -H "Content-Type: application/json" \
     -d '{"sentence": "日本の総理は菅総理だ。"}'
 
 # question
-$ curl localhost:8000/api/v1/question -X POST -H "Content-Type: application/json" \
+$ curl localhost:8000/question -X POST -H "Content-Type: application/json" \
     -d '{"sentence": "日本で有名な総理は？"}
 ```
-
 
 ## Test
 `$ python pytest`
